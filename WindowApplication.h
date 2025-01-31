@@ -34,8 +34,10 @@
 struct Application
 {
     DDS_DomainParticipant *participant;
-    char topic_name[255];
-    char type_name[255];
+    char topic_name_window_command[15];
+    char type_name_window_command[15];
+    char topic_name_window_update[15];
+    char type_name_window_update[15];
     DDS_Long sleep_time;
     DDS_Long count;
     DDS_Topic *topic;

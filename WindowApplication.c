@@ -215,8 +215,8 @@ Application_create(
     /* if there are more remote or local endpoints, you need to increase these limits */
     dp_qos.resource_limits.max_destination_ports = 32;
     dp_qos.resource_limits.max_receive_ports = 32;
-    dp_qos.resource_limits.local_topic_allocation = 1;
-    dp_qos.resource_limits.local_type_allocation = 1;
+    dp_qos.resource_limits.local_topic_allocation = 2;
+    dp_qos.resource_limits.local_type_allocation = 2;
     dp_qos.resource_limits.local_reader_allocation = 1;
     dp_qos.resource_limits.local_writer_allocation = 1;
     dp_qos.resource_limits.remote_participant_allocation = 8;
@@ -236,23 +236,53 @@ Application_create(
         goto done;
     }
 
+    /* Window Command Type */
     strcpy(
-        application->type_name,
-        WindowUpdateTypeSupport_get_type_name());
-    retcode = WindowUpdateTypeSupport_register_type(
+        application->type_name_window_command,
+        WindowCommandTypeSupport_get_type_name());
+    retcode = WindowCommandTypeSupport_register_type(
         application->participant,
-        application->type_name);
+        application->type_name_window_command);
     if (retcode != DDS_RETCODE_OK)
     {
-        printf("failed to register type: %s\n", "test_type");
+        printf("failed to register type: %s\n", WindowCommandTypeSupport_get_type_name());
         goto done;
     }
 
-    sprintf(application->topic_name, "Example WindowUpdate");
+    /* Window Update Type */
+    strcpy(
+        application->type_name_window_update,
+        WindowUpdateTypeSupport_get_type_name());
+    retcode = WindowUpdateTypeSupport_register_type(
+        application->participant,
+        application->type_name_window_update);
+    if (retcode != DDS_RETCODE_OK)
+    {
+        printf("failed to register type: %s\n", WindowUpdateTypeSupport_get_type_name());
+        goto done;
+    }
+
+    /* Window Command Topic */
+    sprintf(application->topic_name_window_command, TOPIC_WINDOW_COMMAND);
     application->topic = DDS_DomainParticipant_create_topic(
         application->participant,
-        application->topic_name,
-        application->type_name,
+        application->topic_name_window_command,
+        application->type_name_window_command,
+        &DDS_TOPIC_QOS_DEFAULT,
+        NULL,
+        DDS_STATUS_MASK_NONE);
+    if (application->topic == NULL)
+    {
+        printf("topic == NULL\n");
+        goto done;
+    }
+    
+    /* Window Update Type */
+    sprintf(application->topic_name_window_update, TOPIC_WINDOW_UPDATE);
+    application->topic = DDS_DomainParticipant_create_topic(
+        application->participant,
+        application->topic_name_window_update,
+        application->type_name_window_update,
         &DDS_TOPIC_QOS_DEFAULT,
         NULL,
         DDS_STATUS_MASK_NONE);
