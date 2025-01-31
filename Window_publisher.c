@@ -37,7 +37,8 @@ publisher_main_w_args(
     char *udp_intf,
     char *peer,
     DDS_Long sleep_time,
-    DDS_Long count)
+    DDS_Long count, 
+    char *window_id)
 {
     DDS_Publisher *publisher;
     DDS_DataWriter *datawriter;
@@ -123,7 +124,8 @@ publisher_main_w_args(
     for (i = 0; (application->count <= 0) || (i < application->count); ++i)
     {
 
-        /* TODO set sample attributes here */
+        sample->id = DDS_String_dup(window_id);
+        sample->position = (unsigned short) i;
 
         retcode = WindowUpdateDataWriter_write(
             hw_datawriter,
@@ -178,8 +180,9 @@ main(int argc, char **argv)
     DDS_Long domain_id = 0;
     char *peer = NULL;
     char *udp_intf = NULL;
-    DDS_Long sleep_time = 1000;
+    DDS_Long sleep_time = 200;
     DDS_Long count = 0;
+    char *window_id = "XY";
 
     for (i = 1; i < argc; ++i)
     {
@@ -233,6 +236,16 @@ main(int argc, char **argv)
             }
             count = (DDS_Long)strtol(argv[i], NULL, 0);
         }
+        else if (!strcmp(argv[i], "-id"))
+        {
+            ++i;
+            if (i == argc)
+            {
+                printf("-id <window_id>\n");
+                return -1;
+            }
+            window_id = argv[i];
+        }
         else if (!strcmp(argv[i], "-h"))
         {
             Application_help(argv[0]);
@@ -245,7 +258,7 @@ main(int argc, char **argv)
         }
     }
 
-    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, count);
+    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, count, window_id);
 }
 #elif defined(RTI_VXWORKS)
 int
