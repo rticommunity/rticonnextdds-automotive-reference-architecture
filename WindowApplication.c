@@ -220,8 +220,8 @@ Application_create(
     dp_qos.resource_limits.local_reader_allocation = 1;
     dp_qos.resource_limits.local_writer_allocation = 1;
     dp_qos.resource_limits.remote_participant_allocation = 8;
-    dp_qos.resource_limits.remote_reader_allocation = 8;
-    dp_qos.resource_limits.remote_writer_allocation = 8;
+    dp_qos.resource_limits.remote_reader_allocation = 25; // enable admin console
+    dp_qos.resource_limits.remote_writer_allocation = 25; // enable admin console
 
     application->participant = DDS_DomainParticipantFactory_create_participant(
         factory,
