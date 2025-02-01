@@ -152,9 +152,14 @@ WindowCommandSubscriber_on_data_available(
             printf("\nValid sample received\n");
 
             printf("- id: %s , position %d\n", sample->id, sample->position);
-            
+            int sample_id = 0;
+            for (int i=0; i < 2; i++)
+            {
+                sample_id = sample_id | (sample->id[i] << i*8);
+            }
+            printf("sample_id 0x%x\n", sample_id);
             int * target = (int *) listener_data;
-            *target = sample->position;
+            *target = sample_id << 8 | sample->position;
             printf("Storing incoming target %d\n", *target);
         }
         else
@@ -347,6 +352,9 @@ publisher_main_w_args(
 
     while (1)
     {
+        int id = (target & (0xFFFF00)) >> 8;
+        target = target & 0xFF;
+
         // Check if there is a command on stdin (non-blocking)
         char input[MAX_INPUT_SIZE];
         char *command = non_blocking_fgets(input, MAX_INPUT_SIZE);
