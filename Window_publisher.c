@@ -125,9 +125,6 @@ WindowCommandSubscriber_on_data_available(
     DDS_SEQUENCE_INITIALIZER;
 
     DDS_Long i;
-    DDS_Long *total_samples = (DDS_Long*) listener_data;
-
-    (void)listener_data;
 
     retcode = WindowCommandDataReader_take(
         hw_reader, 
@@ -153,10 +150,12 @@ WindowCommandSubscriber_on_data_available(
         {
             sample = WindowCommandSeq_get_reference(&sample_seq, i);
             printf("\nValid sample received\n");
-            *total_samples += 1;
 
             printf("- id: %s , position %d\n", sample->id, sample->position);
-
+            
+            int * target = (int *) listener_data;
+            *target = sample->position;
+            printf("Storing incoming target %d\n", *target);
         }
         else
         {
@@ -275,8 +274,6 @@ publisher_main_w_args(
     struct DDS_DataReaderListener dr_listener = 
     DDS_DataReaderListener_INITIALIZER;
 
-    DDS_Long total_samples = 0;
-
 
     subscriber = DDS_DomainParticipant_create_subscriber(
         application->participant,
@@ -329,7 +326,11 @@ publisher_main_w_args(
     dr_listener.on_subscription_matched =
     WindowCommandSubscriber_on_subscription_matched;
 
-    dr_listener.as_listener.listener_data = &total_samples;
+    #define POSITION_START 50
+    sample->position = POSITION_START;
+    int target = POSITION_START;
+    
+    dr_listener.as_listener.listener_data = &target;
 
     datareader = DDS_Subscriber_create_datareader(
         subscriber,
@@ -343,11 +344,6 @@ publisher_main_w_args(
         printf("datareader == NULL\n");
         goto done;
     }
-
-
-    #define POSITION_START 50
-    sample->position = POSITION_START;
-    DDS_UnsignedShort target = POSITION_START;
 
     while (1)
     {
@@ -395,7 +391,7 @@ publisher_main_w_args(
             } 
             else
             {
-                printf("Written sample %d\n",(int)sample->position);
+                //printf("Written sample %d\n",(int)sample->position);
             } 
         }
 
