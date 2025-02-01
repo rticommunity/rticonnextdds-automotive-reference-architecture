@@ -264,31 +264,31 @@ Application_create(
 
     /* Window Command Topic */
     sprintf(application->topic_name_window_command, TOPIC_WINDOW_COMMAND);
-    application->topic = DDS_DomainParticipant_create_topic(
+    application->topic_window_command = DDS_DomainParticipant_create_topic(
         application->participant,
         application->topic_name_window_command,
         application->type_name_window_command,
         &DDS_TOPIC_QOS_DEFAULT,
         NULL,
         DDS_STATUS_MASK_NONE);
-    if (application->topic == NULL)
+    if (application->topic_window_command == NULL)
     {
-        printf("topic == NULL\n");
+        printf("topic_window_command == NULL\n");
         goto done;
     }
     
     /* Window Update Type */
     sprintf(application->topic_name_window_update, TOPIC_WINDOW_UPDATE);
-    application->topic = DDS_DomainParticipant_create_topic(
+    application->topic_window_update = DDS_DomainParticipant_create_topic(
         application->participant,
         application->topic_name_window_update,
         application->type_name_window_update,
         &DDS_TOPIC_QOS_DEFAULT,
         NULL,
         DDS_STATUS_MASK_NONE);
-    if (application->topic == NULL)
+    if (application->topic_window_update == NULL)
     {
-        printf("topic == NULL\n");
+        printf("topic_window_update == NULL\n");
         goto done;
     }
 

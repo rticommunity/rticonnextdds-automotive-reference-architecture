@@ -40,7 +40,8 @@ struct Application
     char type_name_window_update[15];
     DDS_Long sleep_time;
     DDS_Long count;
-    DDS_Topic *topic;
+    DDS_Topic *topic_window_command;
+    DDS_Topic *topic_window_update;
 };
 
 extern void 
