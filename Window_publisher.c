@@ -89,6 +89,93 @@ void str_to_lower(char *str) {
     }
 }
 
+
+static void
+WindowCommandSubscriber_on_subscription_matched(
+    void *listener_data,
+    DDS_DataReader *reader,
+    const struct DDS_SubscriptionMatchedStatus *status)
+{
+    (void)listener_data;
+    (void)reader;
+
+    if (status->current_count_change > 0)
+    {
+        printf("Matched a publisher\n");
+    }
+    else if (status->current_count_change < 0)
+    {
+        printf("Unmatched a publisher\n");
+    }
+}
+
+static void
+WindowCommandSubscriber_on_data_available(
+    void *listener_data,
+    DDS_DataReader * reader)
+{
+    WindowCommandDataReader *hw_reader = WindowCommandDataReader_narrow(reader);
+    DDS_ReturnCode_t retcode;
+    struct DDS_SampleInfo *sample_info = NULL;
+    WindowCommand *sample = NULL;
+
+    struct DDS_SampleInfoSeq info_seq = 
+    DDS_SEQUENCE_INITIALIZER;
+    struct WindowCommandSeq sample_seq = 
+    DDS_SEQUENCE_INITIALIZER;
+
+    DDS_Long i;
+    DDS_Long *total_samples = (DDS_Long*) listener_data;
+
+    (void)listener_data;
+
+    retcode = WindowCommandDataReader_take(
+        hw_reader, 
+        &sample_seq,
+        &info_seq,
+        DDS_LENGTH_UNLIMITED,
+        DDS_ANY_SAMPLE_STATE,
+        DDS_ANY_VIEW_STATE,
+        DDS_ANY_INSTANCE_STATE);
+
+    if (retcode != DDS_RETCODE_OK)
+    {
+        printf("failed to take data, retcode(%d)\n", retcode);
+        goto done;
+    }
+
+    /* Print each valid sample taken */
+    for (i = 0; i < WindowCommandSeq_get_length(&sample_seq); ++i)
+    {
+        sample_info = DDS_SampleInfoSeq_get_reference(&info_seq, i);
+
+        if (sample_info->valid_data)
+        {
+            sample = WindowCommandSeq_get_reference(&sample_seq, i);
+            printf("\nValid sample received\n");
+            *total_samples += 1;
+
+            printf("- id: %s , position %d\n", sample->id, sample->position);
+
+        }
+        else
+        {
+            printf("\nSample received\n\tINVALID DATA\n");
+        }
+    }
+
+    WindowCommandDataReader_return_loan(hw_reader, &sample_seq, &info_seq);
+
+    done:
+    #ifndef RTI_CERT
+    WindowCommandSeq_finalize(&sample_seq);
+    DDS_SampleInfoSeq_finalize(&info_seq);
+    #else
+    return;
+    #endif
+}
+
+
 static int
 publisher_main_w_args(
     DDS_Long domain_id,
@@ -98,6 +185,7 @@ publisher_main_w_args(
     DDS_Long count, 
     char *window_id)
 {
+    // Publisher
     DDS_Publisher *publisher;
     DDS_DataWriter *datawriter;
     WindowUpdateDataWriter *hw_datawriter;
@@ -105,7 +193,6 @@ publisher_main_w_args(
     DDS_ReturnCode_t retcode;
     WindowUpdate *sample = NULL;
     struct Application *application = NULL;
-    //DDS_Long i;
     struct DDS_DataWriterListener dw_listener = DDS_DataWriterListener_INITIALIZER;
     int ret_value = -1;
 
@@ -159,7 +246,7 @@ publisher_main_w_args(
 
     datawriter = DDS_Publisher_create_datawriter(
         publisher,
-        application->topic,
+        application->topic_window_update,
         &dw_qos,
         &dw_listener,
         DDS_PUBLICATION_MATCHED_STATUS);
@@ -178,6 +265,85 @@ publisher_main_w_args(
     memAllocDisable();
     #endif
     #endif
+
+
+    // Subscriber
+    DDS_Subscriber *subscriber;
+    DDS_DataReader *datareader;
+    struct DDS_DataReaderQos dr_qos = DDS_DataReaderQos_INITIALIZER;
+
+    struct DDS_DataReaderListener dr_listener = 
+    DDS_DataReaderListener_INITIALIZER;
+
+    DDS_Long total_samples = 0;
+
+
+    subscriber = DDS_DomainParticipant_create_subscriber(
+        application->participant,
+        &DDS_SUBSCRIBER_QOS_DEFAULT,
+        NULL,
+        DDS_STATUS_MASK_NONE);
+    if (subscriber == NULL)
+    {
+        printf("subscriber == NULL\n");
+        goto done;
+    }
+
+    /* Publisher sends samples with id = 0 or id = 1, so 2 instances maximum.
+    * But in case filtering is done, all samples with 'id = 0' are
+    * filtered so only one instance is needed.
+    */
+    #ifdef USE_SAMPLE_FILTER
+    dr_qos.resource_limits.max_instances = 1;
+    #else
+    dr_qos.resource_limits.max_instances = 2;
+    #endif
+
+    dr_qos.resource_limits.max_samples_per_instance = 32;
+    dr_qos.resource_limits.max_samples = dr_qos.resource_limits.max_instances *
+    dr_qos.resource_limits.max_samples_per_instance;
+    /* if there are more remote writers, you need to increase these limits */
+    dr_qos.reader_resource_limits.max_remote_writers = 10;
+    dr_qos.reader_resource_limits.max_remote_writers_per_instance = 10;
+    dr_qos.history.depth = 32;
+
+    /* Reliability QoS */
+    #ifdef USE_RELIABLE_QOS
+    dr_qos.reliability.kind = DDS_RELIABLE_RELIABILITY_QOS;
+    #else
+    dr_qos.reliability.kind = DDS_BEST_EFFORT_RELIABILITY_QOS;
+    #endif
+
+    #ifdef USE_SAMPLE_FILTER
+    /* choose one callback to enable */
+    #ifdef FILTER_ON_DESERIALIZE
+    dr_listener.on_before_sample_deserialize =
+    WindowCommandSubscriber_on_before_sample_deserialize;
+    #else
+    dr_listener.on_before_sample_commit =
+    WindowCommandSubscriber_on_before_sample_commit;
+    #endif  /* FILTER_ON_DESERIALIZE */
+    #endif  /* USE_SAMPLE_FILTER */
+
+    dr_listener.on_data_available = WindowCommandSubscriber_on_data_available;
+    dr_listener.on_subscription_matched =
+    WindowCommandSubscriber_on_subscription_matched;
+
+    dr_listener.as_listener.listener_data = &total_samples;
+
+    datareader = DDS_Subscriber_create_datareader(
+        subscriber,
+        DDS_Topic_as_topicdescription(application->topic_window_command),
+        &dr_qos,
+        &dr_listener,
+        DDS_DATA_AVAILABLE_STATUS | DDS_SUBSCRIPTION_MATCHED_STATUS);
+
+    if (datareader == NULL)
+    {
+        printf("datareader == NULL\n");
+        goto done;
+    }
+
 
     #define POSITION_START 50
     sample->position = POSITION_START;
