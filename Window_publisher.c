@@ -334,8 +334,9 @@ publisher_main_w_args(
     #define POSITION_START 50
     sample->position = POSITION_START;
     int target = POSITION_START;
+    int command_remote = 0;
     
-    dr_listener.as_listener.listener_data = &target;
+    dr_listener.as_listener.listener_data = &command_remote;
 
     datareader = DDS_Subscriber_create_datareader(
         subscriber,
@@ -352,24 +353,46 @@ publisher_main_w_args(
 
     while (1)
     {
-        int id = (target & (0xFFFF00)) >> 8;
-        target = target & 0xFF;
-
-        // Check if there is a command on stdin (non-blocking)
-        char input[MAX_INPUT_SIZE];
-        char *command = non_blocking_fgets(input, MAX_INPUT_SIZE);
-        if (command != NULL) {
-            // Case insensitive check for commands
-            for (int i = 0; command[i]; i++) {
-                command[i] = tolower(command[i]);
+        // Check if a command was issued for our window_id
+        int id = (command_remote & (0xFFFF00)) >> 8;
+        if (id != 0)
+        {
+            int id_check = id;
+            for (int i=0; i<2; i++)
+            {
+                if ( window_id[i] != (id_check & 0xFF) )
+                {
+                    id = 0;
+                    break;
+                }
+                else
+                {
+                    id_check = id_check >> 8;
+                }
             }
-            //printf("%s\n", command);
-            if (strcmp(command, "open") == 0)
+            if ( id != 0 )
+            {
+                target = command_remote & 0xFF;
+                printf("Received valid remote command - target now %d\n", target);
+                command_remote = 0;
+            }
+        }
+
+        // Check if there is a local command on stdin (non-blocking)
+        char input[MAX_INPUT_SIZE];
+        char *command_local = non_blocking_fgets(input, MAX_INPUT_SIZE);
+        if (command_local != NULL) {
+            // Case insensitive check for local commands
+            for (int i = 0; command_local[i]; i++) {
+                command_local[i] = tolower(command_local[i]);
+            }
+            //printf("%s\n", command_local);
+            if (strcmp(command_local, "open") == 0)
             {
                 //printf("Opening window\n");
                 target = 0;
             }
-            else if (strcmp(command, "close") == 0)
+            else if (strcmp(command_local, "close") == 0)
             {
                 //printf("Closing window, current position %d\n");
                 target = 100;
