@@ -96,20 +96,39 @@ class Cockpit:
 
 if __name__ == "__main__":
     app = Cockpit()
-    command_format = "<command> <window_id>\n where <command> = open, close"
-    print(f"Enter window command: {command_format}")
-    print("Enter Ctrl-C to exit")
-    try:
-        while True:
-            command_str = input()
-            try:
-                command, window_id = command_str.split(" ")
-            except ValueError:
-                print(f">> Error: expected format {command_format}")
-                continue
-            try:
-                getattr(app, f"send_{command}")(window_id)
-            except AttributeError:
-                print(">> Invalid command")
-    except KeyboardInterrupt:
-        pass
+    USE_GUI = False
+
+    if USE_GUI:
+        import tkinter as tk
+        from tkinter import ttk
+        root = tk.Tk()
+        frame = tk.Frame(root)
+        label = tk.Label(frame, text="Window id: ")
+        entry = tk.Entry(frame, text="FR")
+        btn_open = tk.Button(frame, text="OPEN", command=lambda: app.send_open(entry.get()))
+        btn_close = tk.Button(frame, text="CLOSE", command=lambda: app.send_close(entry.get()))
+        label.pack(side=tk.LEFT)
+        entry.pack(side=tk.LEFT)
+        btn_open.pack(side=tk.LEFT)
+        btn_close.pack(side=tk.LEFT)
+        frame.pack()
+        root.mainloop()
+    
+    else:
+        command_format = "<command> <window_id>\n where <command> = open, close"
+        print(f"Enter window command: {command_format}")
+        print("Enter Ctrl-C to exit")
+        try:
+            while True:
+                command_str = input()
+                try:
+                    command, window_id = command_str.split(" ")
+                except ValueError:
+                    print(f">> Error: expected format {command_format}")
+                    continue
+                try:
+                    getattr(app, f"send_{command}")(window_id)
+                except AttributeError:
+                    print(">> Invalid command")
+        except KeyboardInterrupt:
+            pass
