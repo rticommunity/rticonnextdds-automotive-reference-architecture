@@ -31,6 +31,64 @@ WindowUpdatePublisher_on_publication_matched(
     }
 }
 
+
+#include <stdio.h>
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <sys/select.h>
+
+#define MAX_INPUT_SIZE 6 // OPEN, CLOSE
+
+char *non_blocking_fgets(char *buffer, int size) {
+    int flags, available;
+    fd_set readfds;
+    struct timeval timeout;
+
+    // Set stdin to non-blocking mode
+    flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+
+
+    FD_ZERO(&readfds);
+    FD_SET(STDIN_FILENO, &readfds);
+
+    // Set a timeout if you want to avoid indefinite blocking if no input arrives immediately.
+    //  If you want it to be truly non-blocking and return immediately even if no input is available,
+    //  set timeout.tv_sec and timeout.tv_usec to 0.
+    timeout.tv_sec = 0;   // 0 seconds
+    timeout.tv_usec = 0;  // 0 microseconds
+
+    available = select(1, &readfds, NULL, NULL, &timeout); // Check if input is available
+
+    if (available > 0) {  // Input is available
+        if (fgets(buffer, size, stdin) != NULL) {
+            // Remove trailing newline if present (fgets keeps it)
+            int len = strlen(buffer);
+            if (len > 0 && buffer[len - 1] == '\n') {
+                buffer[len - 1] = '\0';
+            }
+            
+            //Restore the original flags
+            fcntl(STDIN_FILENO, F_SETFL, flags);
+            return buffer;
+        }
+    }
+    
+    //Restore the original flags even if there was no input. Important!
+    fcntl(STDIN_FILENO, F_SETFL, flags);
+    return NULL; // No input available within the timeout, or error.
+}
+
+#include <string.h>
+#include <ctype.h>
+// Function to convert a string to lowercase
+void str_to_lower(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
+}
+
 static int
 publisher_main_w_args(
     DDS_Long domain_id,
@@ -47,7 +105,7 @@ publisher_main_w_args(
     DDS_ReturnCode_t retcode;
     WindowUpdate *sample = NULL;
     struct Application *application = NULL;
-    DDS_Long i;
+    //DDS_Long i;
     struct DDS_DataWriterListener dw_listener = DDS_DataWriterListener_INITIALIZER;
     int ret_value = -1;
 
@@ -121,24 +179,59 @@ publisher_main_w_args(
     #endif
     #endif
 
-    for (i = 0; (application->count <= 0) || (i < application->count); ++i)
+    #define POSITION_START 50
+    sample->position = POSITION_START;
+    DDS_UnsignedShort target = POSITION_START;
+
+    while (1)
     {
+        // Check if there is a command on stdin (non-blocking)
+        char input[MAX_INPUT_SIZE];
+        char *command = non_blocking_fgets(input, MAX_INPUT_SIZE);
+        if (command != NULL) {
+            // Case insensitive check for commands
+            for (int i = 0; command[i]; i++) {
+                command[i] = tolower(command[i]);
+            }
+            //printf("%s\n", command);
+            if (strcmp(command, "open") == 0)
+            {
+                //printf("Opening window\n");
+                target = 0;
+            }
+            else if (strcmp(command, "close") == 0)
+            {
+                //printf("Closing window, current position %d\n");
+                target = 100;
+            }
+            else
+            {
+                printf(">> Invalid command\n");
+            }
+        } else {
+           // printf("No input available.\n"); // Optional.  Don't spam this if you really want it non-blocking.
+        }
 
-        sample->id = DDS_String_dup(window_id);
-        sample->position = (unsigned short) i;
+        // Update the position and send DDS update if moving
+        if (sample->position != target)
+        {
+            short delta = (sample->position > target) ? -1 : 1;
+            sample->position += delta;
+            sample->id = DDS_String_dup(window_id);
 
-        retcode = WindowUpdateDataWriter_write(
-            hw_datawriter,
-            sample,
-            &DDS_HANDLE_NIL);
-        if (retcode != DDS_RETCODE_OK)
-        {
-            printf("Failed to write sample\n");
-        } 
-        else
-        {
-            printf("Written sample %d\n",(i+1));
-        } 
+            retcode = WindowUpdateDataWriter_write(
+                hw_datawriter,
+                sample,
+                &DDS_HANDLE_NIL);
+            if (retcode != DDS_RETCODE_OK)
+            {
+                printf("Failed to write sample\n");
+            } 
+            else
+            {
+                printf("Written sample %d\n",(int)sample->position);
+            } 
+        }
 
         OSAPI_Thread_sleep((RTI_UINT32)application->sleep_time);
     }
@@ -180,7 +273,7 @@ main(int argc, char **argv)
     DDS_Long domain_id = 0;
     char *peer = NULL;
     char *udp_intf = NULL;
-    DDS_Long sleep_time = 200;
+    DDS_Long sleep_time = 50;
     DDS_Long count = 0;
     char *window_id = "XY";
 
@@ -256,7 +349,7 @@ main(int argc, char **argv)
             printf("unknown option: %s\n", argv[i]);
             return -1;
         }
-    }
+    }    
 
     return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, count, window_id);
 }
