@@ -1,153 +1,34 @@
+# What
 
-C Window Dynamic Discovery Example
-=====================
+Basic example for a window control use-case.
 
-An example publication and subscription pair to send and receive the type
-provide by user.
+## System
 
-Discovery of endpoints is done with the dynamic-endpoint discovery.
++ One window controller app, in Micro (Window_publisher), with support for fully opening and fully closing one window (simulates using door buttons)
++ One cockpit GUI app (cockpit.py), in Pro/Python, with support for fully opening and fully closing a window via the window controller (simulates buttons on the infotainment screen or mobile app)
 
-Purpose
-=======
+# How to
 
-This example shows how to perform basic publish-subscribe communication.
+1. Compile the Micro app as usual using rtime-make
+2. Execute the Micro app as follows:
 
-This example performs endpoint discovery dynamically: state of remote endpoints
-are propagated automatically by built-in discovery endpoints, and the user does
-not need to manually configure remote endpoint state.
+(venv7305) mzain@RTISP-10122:~/Dev/WindowExample$ ./objs/x64Linux4gcc7.3.0/Window_publisher -id FR
 
-Subscriber application creates a DataReader which uses a listener to receive
-notifications about new samples and matched publishers. These notifications are 
-received in the middleware thread (instead of the application thread).
+3. Execute the cockpit app as follows:
 
-How to Compile and Run
-======================
+(venv7305) mzain@RTISP-10122:~/Dev/WindowExample$ python3 cockpit.py 
 
---------------------
-Compiling with CMake
---------------------
-Before compiling, set environment variable RTIMEHOME to the Connext DDS Micro 
-installation directory. 
+4. On the Micro app, you may enter the following commands to move the window. You should see the window position updating on the cockpit.py console output (or if you're subscribing via Admin Console)
+- open
+- close
 
-The RTI Connext DDS Micro source bundle includes a bash (Unix) and BAT (Windows)
-script to simplify the invocation of CMake. These scripts are a convenient way 
-to invoke CMake with the correct options. E.g:
+5. On the cockpit app, you may use the GUI buttons to open or close the window. You should see the window position updating on the cockpit.py console output (or if you're subscribing via Admin Console)
 
-Linux
------
-cd "<WindowApplication directory>"
-rtime-make --config <Debug|Release> --build --name x64Linux3gcc4.8.2 --target Linux --source-dir . -G "Unix Makefiles" --delete  [-DRTIME_IDL_ADD_REGENERATE_TYPESUPPORT_RULE=true]
+6. You may send new commands from either app to interrupt any command currently executing.
 
-Windows
--------
-cd "<WindowApplication directory>"
-rtime-make.bat --config <Debug|Release> --build --name i86Win32VS2010 --target Windows --source-dir . -G "Visual Studio 10 2010" --delete  [-DRTIME_IDL_ADD_REGENERATE_TYPESUPPORT_RULE_eq_true]
+# To Do
 
-Darwin
-------
-cd "<WindowApplication directory>"
-rtime-make --config <Debug|Release> --build --name x64Darwin17.3.0Clang9.0.0 --target Darwin --source-dir . -G "Unix Makefiles" --delete  [-DRTIME_IDL_ADD_REGENERATE_TYPESUPPORT_RULE=true]
-
-The executable can be found on directory "objs"
-
-It is also possible to compile using CMake, e.g. in case the RTI Connext DDS 
-Micro source bundle is not installed.  
-
-Linux
------
-cmake [-DRTIME_IDL_ADD_REGENERATE_TYPESUPPORT_RULE=true] [-DCMAKE_BUILD_TYPE=<Debug|Release>]  -G "Unix Makefiles" -B./<your build directory> -H. -DRTIME_TARGET_NAME=x64Linux3gcc4.8.2
-cmake --build ./<your build directory> [--config <Debug|Release>]
-
-Windows
--------
-cmake [-DRTIME_IDL_ADD_REGENERATE_TYPESUPPORT_RULE=true] [-DCMAKE_BUILD_TYPE=<Debug|Release>]  -G "Visual Studio 10 2010" -B./<your build directory> -H. -DRTIME_TARGET_NAME=i86Win32VS2010
-cmake --build ./<your build directory> [--config <Debug|Release>]
-
-Darwin
-------
-cmake [-DRTIME_IDL_ADD_REGENERATE_TYPESUPPORT_RULE=true] [-DCMAKE_BUILD_TYPE=<Debug|Release>]  -G "Unix Makefiles" -B./<your build directory> -H. -DRTIME_TARGET_NAME=x64Darwin17.3.0Clang9.0.0
-cmake --build ./<your build directory> [--config <Debug|Release>]
-
-The executable can be found on ./objs
-
-Option -DRTIME_IDL_ADD_REGENERATE_TYPESUPPORT_RULE=true adds a rule to regenerate
-type support plugin source files if the input IDL/XML file changes.
-Default value is 'false'.
-
-------------------------------------------------------
-Running Window_publisher and Window_subscriber
-------------------------------------------------------
-
-By default the example uses two interfaces to receive samples. The names of these
-interfaces are configured in file WindowApplication.c.
-Some OS installations might use different names which would prevent communication.
-For this reason it is recommended to use option -udp_intf <interface name>. Normally
-you can use command 'ifconfig' (Linux) and 'ipconfig' (Windows) to know the name
-of all available interfaces.
-
-E.g. in case the Window has been compiled for Linux i86Linux3gcc4.8.2 run the subscriber by typing:
-
-objs/x64Linux3gcc4.8.2/Window_subscriber [-domain <Domain_ID>] [-udp_intf <interface name>] [-peer <address>] [-sleep <sleep_time>] [-count <seconds_to_run>]
-
-and run the publisher by typing:
-
-objs/x64Linux3gcc4.8.2/Window_publisher [-domain <Domain_ID>] [-udp_intf <interface name>] [-peer <address>] [-sleep <sleep_time>] [-count <seconds_to_run>]
-
-Source Overview
-===============
-
-Type WindowUpdate is provided by user and defined in file
-"Window.idl".
-
-For convenience a CMakeList.txt is also generated so the example can be easily
-compiled with CMake. A dependency can be added so the type-plugin interface
-is regenerated if file Window.idl changes.
-
-For the type to be usable by Connext DDS Micro, type-support files must be 
-generated that implement a type-plugin interface. The CMakeList.txt file
-will generate these support files, by invoking rtiddsgen. Note that rtiddsgen
-can be invoked manually, with an example command like this:
-
-"$(RTIMEHOME)/rtiddsmag/scripts/rtiddsgen" -micro -language C Window.idl
-
-The generated source files are Window.c,
-WindowSupport.c, and 
-WindowPlugin.c. Associated header files are also
-generated.
-
-The DataWriter and DataReader of the type are managed in
-Window_publisher.c and 
-Window_subscriber.c, respectively. The
-DomainParticipant of each is managed in
-WindowApplication.c.
-
-Example Files Overview
-======================
-
-WindowApplication.c:
-This file contains the logic for creating an application. This includes steps 
-for configuring discovery and creating a DomainParticipant. This file also 
-includes code for registering a type with the DomainParticipant.
-
-Window_publisher.c:
-This file contains the logic for creating a Publisher and a DataWriter, and 
-sending data.  
-
-Window_subscriber.c:
-This file contains the logic for creating a Subscriber and a DataReader, a 
-DataReaderListener, and listening for data.
-
-WindowPlugin.c:
-This file creates the plugin for the Window data type.  This
-file contains the code for serializing and deserializing the Window
-type, creating, copying, printing and deleting the Window type,
-determining the size of the serialized type, and handling hashing a key, and
-creating the plug-in.
-
-WindowSupport.c:
-This file defines the Window type and its typed DataWriter,
-DataReader, and Sequence.
-
-Window.c:
-This file contains the APIs for managing the Window type.
-
+- Support more than one window.
+- Display window position on the GUI
+- Refactor
+- ...

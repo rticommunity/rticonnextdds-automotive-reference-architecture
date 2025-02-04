@@ -96,17 +96,17 @@ class Cockpit:
 
 if __name__ == "__main__":
     app = Cockpit()
-    USE_GUI = False
+    USE_GUI = True
 
     if USE_GUI:
         import tkinter as tk
         from tkinter import ttk
         root = tk.Tk()
-        frame = tk.Frame(root)
-        label = tk.Label(frame, text="Window id: ")
-        entry = tk.Entry(frame, text="FR")
-        btn_open = tk.Button(frame, text="OPEN", command=lambda: app.send_open(entry.get()))
-        btn_close = tk.Button(frame, text="CLOSE", command=lambda: app.send_close(entry.get()))
+        frame = ttk.Frame(root)
+        label = ttk.Label(frame, text="Window id: ")
+        entry = ttk.Entry(frame, text="FR")
+        btn_open = ttk.Button(frame, text="OPEN", command=lambda: app.send_open(entry.get()))
+        btn_close = ttk.Button(frame, text="CLOSE", command=lambda: app.send_close(entry.get()))
         label.pack(side=tk.LEFT)
         entry.pack(side=tk.LEFT)
         btn_open.pack(side=tk.LEFT)
