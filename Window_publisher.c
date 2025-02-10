@@ -38,7 +38,7 @@ WindowUpdatePublisher_on_publication_matched(
 #include <fcntl.h>
 #include <sys/select.h>
 
-#define MAX_INPUT_SIZE 6 // OPEN, CLOSE
+#define MAX_INPUT_SIZE 9 // OPEN FR, CLOSE FL
 
 char *non_blocking_fgets(char *buffer, int size) {
     int flags, available;
@@ -86,6 +86,12 @@ char *non_blocking_fgets(char *buffer, int size) {
 void str_to_lower(char *str) {
     for (int i = 0; str[i]; i++) {
         str[i] = tolower(str[i]);
+    }
+}
+// Function to convert a string to uppercase
+void str_to_upper(char *str) {
+    for (size_t i = 0; i < strlen(str); i++) {
+        str[i] = toupper((unsigned char)str[i]);
     }
 }
 
@@ -152,15 +158,11 @@ WindowCommandSubscriber_on_data_available(
             printf("\nValid sample received\n");
 
             printf("- id: %s , position %d\n", sample->id, sample->position);
-            int sample_id = 0;
-            for (int i=0; i < 2; i++)
-            {
-                sample_id = sample_id | (sample->id[i] << i*8);
-            }
-            printf("sample_id 0x%x\n", sample_id);
-            int * target = (int *) listener_data;
-            *target = sample_id << 8 | sample->position;
-            printf("Storing incoming target %d\n", *target);
+
+            WindowCommand * remote_command = (WindowCommand *) listener_data;
+            remote_command->id = sample->id;
+            remote_command->position = sample->position;
+            printf("Storing incoming command %s %d\n", remote_command->id, remote_command->position);
         }
         else
         {
@@ -180,13 +182,23 @@ WindowCommandSubscriber_on_data_available(
 }
 
 
+#define WINDOW_POSITION_START 50
+typedef struct WindowState
+{
+    char * id;
+    int position;
+    int target;
+} WindowState_t;
+
+
+
 static int
 publisher_main_w_args(
     DDS_Long domain_id,
     char *udp_intf,
     char *peer,
     DDS_Long sleep_time,
-    char *window_id)
+    char **window_ids)
 {
     // Publisher
     DDS_Publisher *publisher;
@@ -198,6 +210,14 @@ publisher_main_w_args(
     struct Application *application = NULL;
     struct DDS_DataWriterListener dw_listener = DDS_DataWriterListener_INITIALIZER;
     int ret_value = -1;
+
+    WindowState_t windows[2];
+    for (int i = 0; i < 2; i++)
+    {
+        windows[i].id = window_ids[i];
+        windows[i].position = WINDOW_POSITION_START;
+        windows[i].target = WINDOW_POSITION_START;
+    }
 
     sample = WindowUpdateTypeSupport_create_data();
     if (sample == NULL)
@@ -329,12 +349,11 @@ publisher_main_w_args(
     dr_listener.on_subscription_matched =
     WindowCommandSubscriber_on_subscription_matched;
 
-    #define POSITION_START 50
-    sample->position = POSITION_START;
-    int target = POSITION_START;
-    int command_remote = 0;
-    
-    dr_listener.as_listener.listener_data = &command_remote;
+
+    WindowCommand command;
+    command.id = NULL;
+    command.position = WINDOW_POSITION_START;
+    dr_listener.as_listener.listener_data = &command;
 
     datareader = DDS_Subscriber_create_datareader(
         subscriber,
@@ -351,49 +370,41 @@ publisher_main_w_args(
 
     while (1)
     {
-        // Check if a command was issued for our window_id
-        int id = (command_remote & (0xFFFF00)) >> 8;
-        if (id != 0)
+        // Check if a remote command was issued for our window_ids
+        if (command.id)
         {
-            int id_check = id;
-            for (int i=0; i<2; i++)
+            for (int i = 0; i < sizeof(windows)/sizeof(windows[0]); i++)
             {
-                if ( window_id[i] != (id_check & 0xFF) )
+                if (strcmp(command.id, windows[i].id) == 0)
                 {
-                    id = 0;
-                    break;
+                    windows[i].target = command.position;
+                    printf("Received command %s %d\n", command.id, command.position);
+                    command.id = "";
                 }
-                else
-                {
-                    id_check = id_check >> 8;
-                }
-            }
-            if ( id != 0 )
-            {
-                target = command_remote & 0xFF;
-                printf("Received valid remote command - target now %d\n", target);
-                command_remote = 0;
             }
         }
 
-        // Check if there is a local command on stdin (non-blocking)
+        // Check if there is a local command on stdin (non-blocking) and store the target_id
         char input[MAX_INPUT_SIZE];
         char *command_local = non_blocking_fgets(input, MAX_INPUT_SIZE);
         if (command_local != NULL) {
             // Case insensitive check for local commands
-            for (int i = 0; command_local[i]; i++) {
-                command_local[i] = tolower(command_local[i]);
-            }
-            //printf("%s\n", command_local);
-            if (strcmp(command_local, "open") == 0)
+            str_to_lower(command_local);
+            printf(">> Command: %s\n", command_local);
+            
+            if (strncmp(command_local, "open ", 5) == 0 && strlen(command_local) == 7)
             {
-                //printf("Opening window\n");
-                target = 0;
+                command.position = 0;
+                char * window_id = command_local + 5*sizeof(char);
+                str_to_upper(window_id);
+                command.id = DDS_String_dup(window_id);
             }
-            else if (strcmp(command_local, "close") == 0)
+            else if (strncmp(command_local, "close ", 6) == 0 && strlen(command_local) == 8)
             {
-                //printf("Closing window, current position %d\n");
-                target = 100;
+                command.position = 100;
+                char * window_id = command_local + 6*sizeof(char);
+                str_to_upper(window_id);
+                command.id = DDS_String_dup(window_id);
             }
             else
             {
@@ -403,25 +414,30 @@ publisher_main_w_args(
            // printf("No input available.\n"); // Optional.  Don't spam this if you really want it non-blocking.
         }
 
-        // Update the position and send DDS update if moving
-        if (sample->position != target)
+        // Update the position and send DDS update if moving any window
+        for (int w_id = 0; w_id < sizeof(windows)/sizeof(windows[0]); w_id++)
         {
-            short delta = (sample->position > target) ? -1 : 1;
-            sample->position += delta;
-            sample->id = DDS_String_dup(window_id);
+            WindowState_t *window = &windows[w_id];
+            if (window->position != window->target)
+            {
+                short delta = (window->position > window->target) ? -1 : 1;
+                window->position += delta;
+                sample->position = window->position;
+                sample->id = DDS_String_dup(window->id);
 
-            retcode = WindowUpdateDataWriter_write(
-                hw_datawriter,
-                sample,
-                &DDS_HANDLE_NIL);
-            if (retcode != DDS_RETCODE_OK)
-            {
-                printf("Failed to write sample\n");
-            } 
-            else
-            {
-                //printf("Written sample %d\n",(int)sample->position);
-            } 
+                retcode = WindowUpdateDataWriter_write(
+                    hw_datawriter,
+                    sample,
+                    &DDS_HANDLE_NIL);
+                if (retcode != DDS_RETCODE_OK)
+                {
+                    printf("Failed to write sample\n");
+                } 
+                else
+                {
+                    printf("Written sample %d\n",(int)sample->position);
+                } 
+            }
         }
 
         OSAPI_Thread_sleep((RTI_UINT32)application->sleep_time);
@@ -465,7 +481,7 @@ main(int argc, char **argv)
     char *peer = NULL;
     char *udp_intf = NULL;
     DDS_Long sleep_time = 50;
-    char *window_id = "XY";
+    char *window_ids[2] = {"FR", "FL"};
 
     for (i = 1; i < argc; ++i)
     {
@@ -509,15 +525,26 @@ main(int argc, char **argv)
             }
             sleep_time = (DDS_Long)strtol(argv[i], NULL, 0);
         }
-        else if (!strcmp(argv[i], "-id"))
+        else if (!strcmp(argv[i], "-ids"))
         {
             ++i;
             if (i == argc)
             {
-                printf("-id <window_id>\n");
+                printf("-id <window_ids>\n");
                 return -1;
             }
-            window_id = argv[i];
+            char *token = strtok(argv[i], " ");
+            int index = 0;
+            while (token != NULL && index < 2)
+            {
+                window_ids[index++] = token;
+                token = strtok(NULL, " ");
+            }
+            if (index != 2)
+            {
+                printf("Invalid window_ids format. Expected format: \"AB CD\"\n");
+                return -1;
+            }
         }
         else if (!strcmp(argv[i], "-h"))
         {
@@ -531,7 +558,7 @@ main(int argc, char **argv)
         }
     }    
 
-    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, window_id);
+    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, window_ids);
 }
 #elif defined(RTI_VXWORKS)
 int
