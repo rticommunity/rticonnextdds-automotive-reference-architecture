@@ -46,7 +46,13 @@ class Cockpit:
         self.topic_update = dds.Topic(self.participant, TOPIC_WINDOW_UPDATE, WindowUpdate)
         self.topic_command = dds.Topic(self.participant, TOPIC_WINDOW_COMMAND, WindowCommand)
         self.writer = dds.DataWriter(self.topic_command)
-        self.reader = dds.DataReader(self.topic_update)
+        # Create a DataReader with Transient Local Durability
+        datareader_qos = dds.DataReaderQos()
+        datareader_qos.durability.kind = dds.DurabilityKind.TRANSIENT_LOCAL
+        datareader_qos.reliability.kind = dds.ReliabilityKind.RELIABLE
+        datareader_qos.history.kind = dds.HistoryKind.KEEP_LAST
+        datareader_qos.history.depth = 1
+        self.reader = dds.DataReader(self.topic_update, datareader_qos)
 
         # Condition to stop the reader waitset thread
         self.stop_condition = dds.GuardCondition()
