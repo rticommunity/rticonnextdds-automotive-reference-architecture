@@ -432,11 +432,7 @@ publisher_main_w_args(
                 if (retcode != DDS_RETCODE_OK)
                 {
                     printf("Failed to write sample\n");
-                } 
-                else
-                {
-                    printf("Written sample %d\n",(int)sample->position);
-                } 
+                }
             }
         }
 
