@@ -530,15 +530,15 @@ main(int argc, char **argv)
             ++i;
             if (i == argc)
             {
-                printf("-id <window_ids>\n");
+                printf("-ids <window_ids>\n");
                 return -1;
             }
-            char *token = strtok(argv[i], " ");
+            char *token = strtok(argv[i], ",");
             int index = 0;
             while (token != NULL && index < 2)
             {
                 window_ids[index++] = token;
-                token = strtok(NULL, " ");
+                token = strtok(NULL, ",");
             }
             if (index != 2)
             {
