@@ -96,6 +96,25 @@ class Cockpit:
 
     def send_close(self, window_id):
         self._send_target(window_id, 100)
+    
+
+    def close(self):
+        "Graceful exit."
+
+        # Early exit if already closed
+        if self.participant.closed:
+            return
+
+        # Trigger guard condition so waitset threads can finish
+        self.stop_condition.trigger_value = True
+        # Wait until waitset threads are fully done
+        self.thread_reader.join()
+        # Detach any remaining conditions
+        self.waitset.detach_all()
+        # Close entities and participant 
+        self.participant.close_contained_entities()
+        self.participant.close()
+
 
 
 
@@ -110,7 +129,7 @@ if __name__ == "__main__":
         frame_top = ttk.Frame(root)
         label = ttk.Label(frame_top, text="Window ids: ")
         entry = ttk.Entry(frame_top)
-        entry.insert(0, "FL,FR")
+        entry.insert(0, "FL,FR,RL,RR")
         label.pack(side=tk.LEFT, padx=5)
         entry.pack(side=tk.LEFT, padx=5)
         frame_top.pack(pady=5)
@@ -141,6 +160,8 @@ if __name__ == "__main__":
         app.act_on_samples = act_on_samples
 
         root.mainloop()
+
+        app.close()
     
     else:
         command_format = "<command> <window_id>\n where <command> = open, close"
@@ -159,4 +180,4 @@ if __name__ == "__main__":
                 except AttributeError:
                     print(">> Invalid command")
         except KeyboardInterrupt:
-            pass
+            app.close()
