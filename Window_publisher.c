@@ -256,11 +256,12 @@ publisher_main_w_args(
     #else
     dw_qos.reliability.kind = DDS_BEST_EFFORT_RELIABILITY_QOS;
     #endif
-    dw_qos.resource_limits.max_samples_per_instance = 32;
-    dw_qos.resource_limits.max_instances = 2;
+    dw_qos.resource_limits.max_samples_per_instance = 1;
+    dw_qos.resource_limits.max_instances = 4;
     dw_qos.resource_limits.max_samples = dw_qos.resource_limits.max_instances *
     dw_qos.resource_limits.max_samples_per_instance;
-    dw_qos.history.depth = 32;
+    dw_qos.durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
+    dw_qos.history.depth = 1;
     dw_qos.protocol.rtps_reliable_writer.heartbeat_period.sec = 0;
     dw_qos.protocol.rtps_reliable_writer.heartbeat_period.nanosec = 250000000;
 
@@ -316,16 +317,17 @@ publisher_main_w_args(
     #ifdef USE_SAMPLE_FILTER
     dr_qos.resource_limits.max_instances = 1;
     #else
-    dr_qos.resource_limits.max_instances = 2;
+    dr_qos.resource_limits.max_instances = 4;
     #endif
 
-    dr_qos.resource_limits.max_samples_per_instance = 32;
+    dr_qos.resource_limits.max_samples_per_instance = 1;
     dr_qos.resource_limits.max_samples = dr_qos.resource_limits.max_instances *
     dr_qos.resource_limits.max_samples_per_instance;
     /* if there are more remote writers, you need to increase these limits */
-    dr_qos.reader_resource_limits.max_remote_writers = 10;
-    dr_qos.reader_resource_limits.max_remote_writers_per_instance = 10;
-    dr_qos.history.depth = 32;
+    dr_qos.reader_resource_limits.max_remote_writers = 2;
+    dr_qos.reader_resource_limits.max_remote_writers_per_instance = 1;
+    dr_qos.history.depth = 1;
+    dr_qos.durability.kind = DDS_VOLATILE_DURABILITY_QOS;
 
     /* Reliability QoS */
     #ifdef USE_RELIABLE_QOS
@@ -477,7 +479,7 @@ main(int argc, char **argv)
     char *peer = NULL;
     char *udp_intf = NULL;
     DDS_Long sleep_time = 50;
-    char *window_ids[2] = {"FR", "FL"};
+    char * window_ids[2] = {"AB", "CD"};
 
     for (i = 1; i < argc; ++i)
     {
@@ -526,7 +528,7 @@ main(int argc, char **argv)
             ++i;
             if (i == argc)
             {
-                printf("-ids <window_ids>\n");
+                printf("-ids <window_id_1>,<window_id_2>\n");
                 return -1;
             }
             char *token = strtok(argv[i], ",");
@@ -553,7 +555,7 @@ main(int argc, char **argv)
             return -1;
         }
     }    
-
+    printf("window_ids[0] %s , window_ids[1] %s\n", window_ids[0], window_ids[1]);
     return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, window_ids);
 }
 #elif defined(RTI_VXWORKS)
