@@ -8,57 +8,26 @@
 * reliability on the DataReader; otherwise, use
 * best-effort reliability by default.
 */
-
 #define USE_RELIABLE_QOS
-
-/*e \dref_Example_Config_UseSampleFilter
-* Define USE_SAMPLE_FILTER to filter samples
-* using call-backs on the DataReader's listener.
-* Modify the following functions to implement the filter logic:
-* - "WindowUpdateSubscriber_filter_sample"
-* - "WindowUpdateSubscriber_on_before_sample_deserialize"
-* - "WindowUpdateSubscriber_on_before_sample_commit"
-* - "WindowUpdateSubscriber_deserialize_unsigned_long"
-*/
-
-/*#define USE_SAMPLE_FILTER*/
-
-/*e \dref_Example_Config_FilterOnDeserialize
-* Define FILTER_ON_DESERIALIZE to enable
-* filtering on call-back on_before_sample_deserialize;
-* otherwise use call-back on_before_sample_commit
-* by default. */
-
-/*#define FILTER_ON_DESERIALIZE*/
-
-struct Application
-{
-    DDS_DomainParticipant *participant;
-    char topic_name_window_command[15];
-    char type_name_window_command[15];
-    char topic_name_window_update[15];
-    char type_name_window_update[15];
-    DDS_Long sleep_time;
-    DDS_Topic *topic_window_command;
-    DDS_Topic *topic_window_update;
-};
 
 extern void 
 Application_help(char *appname);
 
-extern struct Application*
-Application_create(
-    const char *local_participant_name,
-    const char *remote_participant_name,
-    DDS_Long domain_id,
-    char *udp_intf,
-    char *peer, 
-    DDS_Long sleep_time);
+extern DDS_Boolean
+Application_initialize_micro(char *udp_intf);
+
+extern DDS_Topic *
+Application_register_type_and_create_topic_window_update(DDS_DomainParticipant *participant);
+
+extern DDS_Topic *
+Application_register_type_and_create_topic_window_command(DDS_DomainParticipant *participant);
+
+extern DDS_DomainParticipant *
+Application_create_participant(DDS_Long domain_id, char *peer);
 
 #ifndef RTI_CERT
 extern void
-Application_delete(struct Application *application);
-
-#endif
+Application_delete(DDS_DomainParticipant *participant);
 #endif
 
+#endif
