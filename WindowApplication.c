@@ -23,7 +23,6 @@ Application_help(char *appname)
     printf("-domain <id>            - DomainId (default: 0)\n");
     printf("-udp_intf <intf>        - udp interface (no default)\n");
     printf("-peer <address>         - peer address (no default)\n");
-    printf("-count <count>          - count (default 0. Runs forever.)\n");
     printf("-sleep <ms>             - sleep between sends (default 1s)\n");
     printf("\n");
 }
@@ -35,8 +34,7 @@ Application_create(
     DDS_Long domain_id,
     char *udp_intf,
     char *peer,
-    DDS_Long sleep_time,
-    DDS_Long count)
+    DDS_Long sleep_time)
 {
     DDS_ReturnCode_t retcode;
     DDS_DomainParticipantFactory *factory = NULL;
@@ -65,7 +63,6 @@ Application_create(
     }
 
     application->sleep_time = sleep_time;
-    application->count = count;
 
     factory = DDS_DomainParticipantFactory_get_instance();
 

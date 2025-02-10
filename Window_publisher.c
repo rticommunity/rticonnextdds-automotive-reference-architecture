@@ -186,7 +186,6 @@ publisher_main_w_args(
     char *udp_intf,
     char *peer,
     DDS_Long sleep_time,
-    DDS_Long count, 
     char *window_id)
 {
     // Publisher
@@ -213,8 +212,7 @@ publisher_main_w_args(
         domain_id,
         udp_intf,
         peer,
-        sleep_time,
-        count);
+        sleep_time);
 
     if (application == NULL)
     {
@@ -467,7 +465,6 @@ main(int argc, char **argv)
     char *peer = NULL;
     char *udp_intf = NULL;
     DDS_Long sleep_time = 50;
-    DDS_Long count = 0;
     char *window_id = "XY";
 
     for (i = 1; i < argc; ++i)
@@ -512,16 +509,6 @@ main(int argc, char **argv)
             }
             sleep_time = (DDS_Long)strtol(argv[i], NULL, 0);
         }
-        else if (!strcmp(argv[i], "-count"))
-        {
-            ++i;
-            if (i == argc)
-            {
-                printf("-count <count>\n");
-                return -1;
-            }
-            count = (DDS_Long)strtol(argv[i], NULL, 0);
-        }
         else if (!strcmp(argv[i], "-id"))
         {
             ++i;
@@ -544,7 +531,7 @@ main(int argc, char **argv)
         }
     }    
 
-    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, count, window_id);
+    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, window_id);
 }
 #elif defined(RTI_VXWORKS)
 int
@@ -555,8 +542,7 @@ publisher_main(void)
     char *peer = "127.0.0.1";
     char *udp_intf = NULL;
     DDS_Long sleep_time = 1000;
-    DDS_Long count = 0;
 
-    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, count);
+    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time);
 }
 #endif

@@ -39,7 +39,6 @@ struct Application
     char topic_name_window_update[15];
     char type_name_window_update[15];
     DDS_Long sleep_time;
-    DDS_Long count;
     DDS_Topic *topic_window_command;
     DDS_Topic *topic_window_update;
 };
@@ -54,8 +53,7 @@ Application_create(
     DDS_Long domain_id,
     char *udp_intf,
     char *peer, 
-    DDS_Long sleep_time,
-    DDS_Long count);
+    DDS_Long sleep_time);
 
 #ifndef RTI_CERT
 extern void
