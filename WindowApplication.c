@@ -425,7 +425,7 @@ publisher_main_w_args(
                 if (strcmp(command.id, windows[i].id) == 0)
                 {
                     windows[i].target = command.position;
-                    printf("Received command %s %d\n", command.id, command.position);
+                    printf("Received remote command %s %d\n", command.id, command.position);
                     command.id = "";
                 }
             }
@@ -441,17 +441,35 @@ publisher_main_w_args(
             
             if (strncmp(command_local, "open ", 5) == 0 && strlen(command_local) == 7)
             {
-                command.position = 0;
+                int target = 0;
                 char * window_id = command_local + 5*sizeof(char);
                 str_to_upper(window_id);
-                command.id = DDS_String_dup(window_id);
+                int num_windows = sizeof(windows) / sizeof(windows[0]);
+                for (int i = 0; i < num_windows; i++)
+                {
+                    if (strcmp(window_id, windows[i].id) == 0)
+                    {
+                        windows[i].target = target;
+                        printf("Received local command %s %d\n", window_id, target);
+                        command.id = "";
+                    }
+                }
             }
             else if (strncmp(command_local, "close ", 6) == 0 && strlen(command_local) == 8)
             {
-                command.position = 100;
+                int target = 100;
                 char * window_id = command_local + 6*sizeof(char);
                 str_to_upper(window_id);
-                command.id = DDS_String_dup(window_id);
+                int num_windows = sizeof(windows) / sizeof(windows[0]);
+                for (int i = 0; i < num_windows; i++)
+                {
+                    if (strcmp(window_id, windows[i].id) == 0)
+                    {
+                        windows[i].target = target;
+                        printf("Received local command %s %d\n", window_id, target);
+                        command.id = "";
+                    }
+                }
             }
             else
             {
