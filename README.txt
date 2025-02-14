@@ -4,31 +4,28 @@ Basic example for a window control use-case.
 
 ## System
 
-+ One window controller app, in Micro (Window_publisher), with support for fully opening and fully closing one window (simulates using door buttons)
-+ One cockpit GUI app (cockpit.py), in Pro/Python, with support for fully opening and fully closing a window via the window controller (simulates buttons on the infotainment screen or mobile app)
++ One window controller app, in Micro (WindowApplication), with support for fully opening and fully closing up to two windows (simulates using door buttons)
++ One cockpit GUI app (cockpit.py), in Pro/Python, with support for fully opening and fully closing four windows via window controllers (simulates buttons on the infotainment screen or mobile app)
 
 # How to
 
 1. Compile the Micro app as usual using rtime-make
 2. Execute the Micro app as follows:
 
-(venv7305) mzain@RTISP-10122:~/Dev/WindowExample$ ./objs/x64Linux4gcc7.3.0/Window_publisher -id FR
+(venv7305) mzain@RTISP-10122:~/Dev/WindowExample$ ./objs/x64Linux4gcc7.3.0/Window_publisher -ids FL,FR
+
+and optionally a second app:
+
+(venv7305) mzain@RTISP-10122:~/Dev/WindowExample$ ./objs/x64Linux4gcc7.3.0/Window_publisher -ids RL,RR
 
 3. Execute the cockpit app as follows:
 
 (venv7305) mzain@RTISP-10122:~/Dev/WindowExample$ python3 cockpit.py 
 
-4. On the Micro app, you may enter the following commands to move the window. You should see the window position updating on the cockpit.py console output (or if you're subscribing via Admin Console)
-- open
-- close
+4. On the Micro app, you may enter the following commands to move a window. You should see the window position updating on the cockpit.py (or if you're subscribing via Admin Console)
+- open FL
+- close FL
 
-5. On the cockpit app, you may use the GUI buttons to open or close the window. You should see the window position updating on the cockpit.py console output (or if you're subscribing via Admin Console)
+5. On the cockpit app, you may use the GUI buttons to open or close the windows. You should see the window position updating on the cockpit.py (or if you're subscribing via Admin Console)
 
 6. You may send new commands from either app to interrupt any command currently executing.
-
-# To Do
-
-- Support more than one window.
-- Display window position on the GUI
-- Refactor
-- ...
