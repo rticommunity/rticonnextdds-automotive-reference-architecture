@@ -110,10 +110,10 @@ FOREACH(idl ${IDL_SOURCE_C})
     ENDIF()
 ENDFOREACH()
 
-ADD_EXECUTABLE(Window_publisher
-               ${CMAKE_CURRENT_SOURCE_DIR}/Window_publisher.${SOURCE_EXTENSION}
+ADD_EXECUTABLE(WindowApplication
                ${CMAKE_CURRENT_SOURCE_DIR}/WindowApplication.${SOURCE_EXTENSION}
-               ${CMAKE_CURRENT_SOURCE_DIR}/WindowApplication.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/WindowApplicationCommon.${SOURCE_EXTENSION}
+               ${CMAKE_CURRENT_SOURCE_DIR}/WindowApplicationCommon.h
                                              ${IDL_GEN_C} ${IDL_GEN_H})
 
-TARGET_LINK_LIBRARIES(Window_publisher  ${MICRO_C_LIBS} ${PLATFORM_LIBS})
+TARGET_LINK_LIBRARIES(WindowApplication  ${MICRO_C_LIBS} ${PLATFORM_LIBS})
