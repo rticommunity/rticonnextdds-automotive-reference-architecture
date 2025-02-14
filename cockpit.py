@@ -136,6 +136,7 @@ if __name__ == "__main__":
         label = ttk.Label(frame_top, text="Window ids: ")
         entry = ttk.Entry(frame_top)
         entry.insert(0, "FL,FR,RL,RR")
+        entry.config(state="readonly")
         label.pack(side=tk.LEFT, padx=5)
         entry.pack(side=tk.LEFT, padx=5)
         frame_top.pack(pady=5)
