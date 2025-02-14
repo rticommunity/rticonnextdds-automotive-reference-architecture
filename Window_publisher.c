@@ -256,6 +256,50 @@ typedef struct WindowState
 } WindowState_t;
 
 
+/// @brief Publish the given window state, always (check_target==0) or if the target is different from the current position (check_target==1)
+/// @param window the WindowState_t to publish
+/// @param check_target 0 to publish regardless of the target and current position, 1 to publish only if the target is different from the current position
+/// @param sample the sample instance to use for publishing
+/// @param datawriter the datawriter to use for publishing
+static void publish_window_state(WindowState_t *window, int check_target, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
+{
+    DDS_ReturnCode_t retcode;
+
+    if ( check_target == 0 || (window->position != window->target) )
+    {
+        if (check_target == 1)
+        {
+            short delta = (window->position > window->target) ? -1 : 1;
+            window->position += delta;
+        }
+        sample->position = window->position;
+        sample->id = DDS_String_dup(window->id);
+
+        retcode = WindowUpdateDataWriter_write(
+            datawriter,
+            sample,
+            &DDS_HANDLE_NIL);
+        if (retcode != DDS_RETCODE_OK)
+        {
+            printf("Failed to write sample\n");
+        }
+    }
+}
+
+/// @brief Publish the window state for all windows
+/// @param window the array of WindowState_t to publish
+/// @param check_target for each window: 0 to publish regardless of the target and current position, 1 to publish only if the target is different from the current position
+/// @param sample the sample instance to use for publishing
+/// @param datawriter the datawriter to use for publishing
+static void publish_window_states(WindowState_t *windows, int num_windows, int check_target, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
+{
+    for (int i = 0; i < num_windows; i++)
+    {
+        publish_window_state(&windows[i], check_target, sample, datawriter);
+    }
+}
+
+
 
 static int
 publisher_main_w_args(
@@ -340,13 +384,17 @@ publisher_main_w_args(
         goto done;
     }
 
+    // Publish the initial state of the windows (ignore any target position)
+    publish_window_states(windows, sizeof(windows)/sizeof(windows[0]), 0, sample, datawriter);
 
+    // Continuously monitor for commands and update the windows if needed
     while (1)
     {
         // Check if a remote command was issued for our window_ids
         if (command.id)
         {
-            for (int i = 0; i < sizeof(windows)/sizeof(windows[0]); i++)
+            int num_windows = sizeof(windows) / sizeof(windows[0]);
+            for (int i = 0; i < num_windows; i++)
             {
                 if (strcmp(command.id, windows[i].id) == 0)
                 {
@@ -388,26 +436,7 @@ publisher_main_w_args(
         }
 
         // Update the position and send DDS update if moving any window
-        for (int w_id = 0; w_id < sizeof(windows)/sizeof(windows[0]); w_id++)
-        {
-            WindowState_t *window = &windows[w_id];
-            if (window->position != window->target)
-            {
-                short delta = (window->position > window->target) ? -1 : 1;
-                window->position += delta;
-                sample->position = window->position;
-                sample->id = DDS_String_dup(window->id);
-                
-                retcode = WindowUpdateDataWriter_write(
-                    datawriter,
-                    sample,
-                    &DDS_HANDLE_NIL);
-                if (retcode != DDS_RETCODE_OK)
-                {
-                    printf("Failed to write sample\n");
-                }
-            }
-        }
+        publish_window_states(windows, sizeof(windows)/sizeof(windows[0]), 1, sample, datawriter);
 
         OSAPI_Thread_sleep((RTI_UINT32)sleep_time);
     }
