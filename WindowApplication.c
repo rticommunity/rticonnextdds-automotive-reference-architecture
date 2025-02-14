@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <sys/select.h>
+#include <ctype.h>
 
 #include "rti_me_c.h"
 #include "wh_sm/wh_sm_history.h"
@@ -11,6 +16,20 @@
 #include "WindowPlugin.h"
 
 #include "WindowApplicationCommon.h"
+
+
+#define NUM_WINDOWS 2
+#define WINDOW_POSITION_START 50
+#define WINDOW_POSITION_OPEN 0
+#define WINDOW_POSITION_CLOSED 100
+typedef struct WindowState
+{
+    char * id;
+    int position;
+    int target;
+} WindowState_t;
+
+#define MAX_INPUT_SIZE 9 // OPEN FR, CLOSE FL
 
 
 RTI_PRIVATE DDS_Publisher *
@@ -106,18 +125,15 @@ WindowCommandSubscriber_on_data_available(
         if (sample_info->valid_data)
         {
             sample = WindowCommandSeq_get_reference(&sample_seq, i);
-            printf("\nValid sample received\n");
-
-            printf("- id: %s , position %d\n", sample->id, sample->position);
 
             WindowCommand * remote_command = (WindowCommand *) listener_data;
             remote_command->id = sample->id;
             remote_command->position = sample->position;
-            printf("Storing incoming command %s %d\n", remote_command->id, remote_command->position);
+            printf("Incoming command: %s %d\n", remote_command->id, remote_command->position);
         }
         else
         {
-            printf("\nSample received\n\tINVALID DATA\n");
+            printf("\nSample received with non-valid data\n");
         }
     }
 
@@ -194,14 +210,6 @@ Application_create_datareader(
 }
 
 
-#include <stdio.h>
-#include <unistd.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <sys/select.h>
-
-#define MAX_INPUT_SIZE 9 // OPEN FR, CLOSE FL
-
 char *non_blocking_fgets(char *buffer, int size) {
     int flags, available;
     fd_set readfds;
@@ -242,8 +250,6 @@ char *non_blocking_fgets(char *buffer, int size) {
     return NULL; // No input available within the timeout, or error.
 }
 
-#include <string.h>
-#include <ctype.h>
 // Function to convert a string to lowercase
 void str_to_lower(char *str) {
     for (int i = 0; str[i]; i++) {
@@ -256,15 +262,6 @@ void str_to_upper(char *str) {
         str[i] = toupper((unsigned char)str[i]);
     }
 }
-
-
-#define WINDOW_POSITION_START 50
-typedef struct WindowState
-{
-    char * id;
-    int position;
-    int target;
-} WindowState_t;
 
 
 /// @brief Publish the given window state, always (check_target==0) or if the target is different from the current position (check_target==1)
@@ -302,18 +299,39 @@ static void publish_window_state(WindowState_t *window, int check_target, Window
 /// @param check_target for each window: 0 to publish regardless of the target and current position, 1 to publish only if the target is different from the current position
 /// @param sample the sample instance to use for publishing
 /// @param datawriter the datawriter to use for publishing
-static void publish_window_states(WindowState_t *windows, int num_windows, int check_target, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
+static void publish_window_states(WindowState_t *windows, int check_target, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
 {
-    for (int i = 0; i < num_windows; i++)
+    for (int i = 0; i < NUM_WINDOWS; i++)
     {
         publish_window_state(&windows[i], check_target, sample, datawriter);
     }
 }
 
 
+ 
+/// @brief Process a command (remote or local) by checking for a matching window id and updating the target position
+/// @param window_id string to match in the windows array.
+/// @param target target position to set for the window in the array.
+/// @param windows array of windows.
+/// @return 1 if command processed sucessfully, 0 otherwise
+static int process_command(char * window_id, int target, WindowState_t *windows)
+{
+    for (int i = 0; i < NUM_WINDOWS; i++)
+    {
+        if (strcmp(window_id, windows[i].id) == 0)
+        {
+            windows[i].target = target;
+            printf("Processed command %s %d\n", window_id, target);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
 
 static int
-publisher_main_w_args(
+main_w_args(
     DDS_Long domain_id,
     char *udp_intf,
     char *peer,
@@ -334,8 +352,8 @@ publisher_main_w_args(
     DDS_ReturnCode_t retcode;
     WindowUpdate *sample = NULL;
 
-    WindowState_t windows[2];
-    for (int i = 0; i < 2; i++)
+    WindowState_t windows[NUM_WINDOWS];
+    for (int i = 0; i < NUM_WINDOWS; i++)
     {
         windows[i].id = window_ids[i];
         windows[i].position = WINDOW_POSITION_START;
@@ -411,7 +429,7 @@ publisher_main_w_args(
     }
 
     // Publish the initial state of the windows (ignore any target position)
-    publish_window_states(windows, sizeof(windows)/sizeof(windows[0]), 0, sample, datawriter);
+    publish_window_states(windows, 0, sample, datawriter);
 
     // Continuously monitor for commands and update the windows if needed
     while (1)
@@ -419,15 +437,10 @@ publisher_main_w_args(
         // Check if a remote command was issued for our window_ids
         if (command.id)
         {
-            int num_windows = sizeof(windows) / sizeof(windows[0]);
-            for (int i = 0; i < num_windows; i++)
+            if ( process_command(command.id, command.position, windows) )
             {
-                if (strcmp(command.id, windows[i].id) == 0)
-                {
-                    windows[i].target = command.position;
-                    printf("Received remote command %s %d\n", command.id, command.position);
-                    command.id = "";
-                }
+                // Reset the remote command structure after processing
+                command.id = "";
             }
         }
 
@@ -437,50 +450,35 @@ publisher_main_w_args(
         if (command_local != NULL) {
             // Case insensitive check for local commands
             str_to_lower(command_local);
-            printf(">> Command: %s\n", command_local);
             
             if (strncmp(command_local, "open ", 5) == 0 && strlen(command_local) == 7)
             {
-                int target = 0;
                 char * window_id = command_local + 5*sizeof(char);
                 str_to_upper(window_id);
-                int num_windows = sizeof(windows) / sizeof(windows[0]);
-                for (int i = 0; i < num_windows; i++)
+                if ( process_command(window_id, WINDOW_POSITION_OPEN, windows) )
                 {
-                    if (strcmp(window_id, windows[i].id) == 0)
-                    {
-                        windows[i].target = target;
-                        printf("Received local command %s %d\n", window_id, target);
-                        command.id = "";
-                    }
+                    // Reset any remote command that might have come before or during the processing
+                    command.id = "";
                 }
             }
             else if (strncmp(command_local, "close ", 6) == 0 && strlen(command_local) == 8)
             {
-                int target = 100;
                 char * window_id = command_local + 6*sizeof(char);
                 str_to_upper(window_id);
-                int num_windows = sizeof(windows) / sizeof(windows[0]);
-                for (int i = 0; i < num_windows; i++)
+                if ( process_command(window_id, WINDOW_POSITION_CLOSED, windows) )
                 {
-                    if (strcmp(window_id, windows[i].id) == 0)
-                    {
-                        windows[i].target = target;
-                        printf("Received local command %s %d\n", window_id, target);
-                        command.id = "";
-                    }
+                    // Reset any remote command that might have come before or during the processing
+                    command.id = "";
                 }
             }
-            else
+            else if (strlen(command_local) > 0)
             {
-                printf(">> Invalid command\n");
+                printf("Invalid command\n");
             }
-        } else {
-           // printf("No input available.\n"); // Optional.  Don't spam this if you really want it non-blocking.
         }
 
         // Update the position and send DDS update if moving any window
-        publish_window_states(windows, sizeof(windows)/sizeof(windows[0]), 1, sample, datawriter);
+        publish_window_states(windows, 1, sample, datawriter);
 
         OSAPI_Thread_sleep((RTI_UINT32)sleep_time);
     }
@@ -598,6 +596,6 @@ main(int argc, char **argv)
             return -1;
         }
     }    
-    printf("window_ids[0] %s , window_ids[1] %s\n", window_ids[0], window_ids[1]);
-    return publisher_main_w_args(domain_id, udp_intf, peer, sleep_time, window_ids);
+    printf("Using window_ids: %s , %s\n", window_ids[0], window_ids[1]);
+    return main_w_args(domain_id, udp_intf, peer, sleep_time, window_ids);
 }
