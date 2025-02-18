@@ -38,6 +38,9 @@
  * @define LOCAL_COMMANDS_TARGETS Array of target positions for each of the valid local commands.
  * @define LOCAL_COMMANDS_INDEX_SET Index of the "SET" command in the local commands array.
  *
+ * @enum return_value_t Return values of the static functions. This is also used to handle the
+ * command to the exit the application.
+ * 
  **/
 
 
@@ -78,12 +81,20 @@ typedef struct WindowState
 
 // Configurations for handling of local commands via stdin
 #define MAX_INPUT_SIZE 11
-#define NUM_COMMANDS 3
-#define LOCAL_COMMANDS_STR {"OPEN", "CLOSE", "SET"}
-#define LOCAL_COMMANDS_STR_LEN {5, 6, 4}
+#define NUM_COMMANDS 4
+#define LOCAL_COMMANDS_STR {"OPEN", "CLOSE", "SET", "EXIT"}
+#define LOCAL_COMMANDS_STR_LEN {5, 6, 4, 5}
 #define LOCAL_COMMANDS_TARGETS {WINDOW_POSITION_OPEN, WINDOW_POSITION_CLOSED}
 #define LOCAL_COMMANDS_INDEX_SET 2
+#define LOCAL_COMMANDS_INDEX_EXIT 3
 
+// Return values of the static functions
+typedef enum
+{
+    RETVAL_ERROR = -1,
+    RETVAL_OK = 0,
+    RETVAL_EXIT = 2
+} return_value_t;
 
 RTI_PRIVATE DDS_Publisher *
 Application_create_publisher(DDS_DomainParticipant *participant)
@@ -366,9 +377,9 @@ static void publish_window_states(WindowState_t *windows, int check_target, Wind
  * @param window_id String to match in the windows array.
  * @param target Target position to set for the window in the array.
  * @param windows Array of windows.
- * @return 1 if command processed successfully, 0 otherwise.
+ * @return OK if command processed successfully, ERROR or otherwise.
  */
-static int process_command(char * window_id, int target, WindowState_t *windows)
+static return_value_t process_command(char * window_id, int target, WindowState_t *windows)
 {
     for (int i = 0; i < NUM_WINDOWS; i++)
     {
@@ -376,10 +387,10 @@ static int process_command(char * window_id, int target, WindowState_t *windows)
         {
             windows[i].target = target;
             printf("Processed command %s %d\n", window_id, target);
-            return 1;
+            return RETVAL_OK;
         }
     }
-    return 0;
+    return RETVAL_ERROR;
 }
 
 
@@ -390,16 +401,16 @@ static int process_command(char * window_id, int target, WindowState_t *windows)
  * command for the current window state.
  *
  * @param windows The array of windows, which will be updated with the target position if the command is valid.
- * @return 1 if command processed sucessfully, 0 otherwise
+ * @return OK if command processed sucessfully, ERROR otherwise
  */
-static int check_local_command(WindowState_t * windows)
+static return_value_t check_local_command(WindowState_t * windows)
 {
     char input[MAX_INPUT_SIZE];
     char *command_local = non_blocking_fgets(input, MAX_INPUT_SIZE);
     char *commands[NUM_COMMANDS] = LOCAL_COMMANDS_STR;
     int commands_targets[NUM_COMMANDS] = LOCAL_COMMANDS_TARGETS;
     int commands_str_len[NUM_COMMANDS] = LOCAL_COMMANDS_STR_LEN;
-    int retval = 0;
+    return_value_t retval = RETVAL_ERROR;
     
     if (command_local != NULL)
     {
@@ -409,7 +420,12 @@ static int check_local_command(WindowState_t * windows)
             // Case insensitive check to compare the stdin command to possible local commands
             if (strncasecmp(command_local, commands[i], commands_str_len[i]-1) == 0)
             {
-                // The stdin command matches one of the valid local commands
+                // Check for the special case of the "EXIT" command
+                if ( i == LOCAL_COMMANDS_INDEX_EXIT )
+                {
+                    printf("Processing exit of the application\n");
+                    return RETVAL_EXIT;
+                }
                 
                 // Extract the window id from the stdin command
                 char window_id[WINDOW_ID_STR_LEN + 1];
@@ -438,6 +454,61 @@ static int check_local_command(WindowState_t * windows)
     return retval;
 }
 
+
+/**
+ * @brief Main loop for window controller application.
+ *
+ * In this loop, we continuously monitor for remote commands and local commands.
+ * Remote commands are inbound via DDS and update the command structure for processing.
+ * Local commands come from stdin and are checked and processed directly.
+ * 
+ * @note Any valid command interrupts and overrides any previous command.
+ * 
+ * @note Local commands take precedence over remote commands as they are processed afterwards in the same loop.
+ *
+ * @param windows    Array of windows managed by this application, for updating the target position etc.
+ * @param command    Reference to the structure in which remote commands are stored. Used to process these commands.
+ * @param sample     Pointer to the sample to use for publishing window position updates.
+ * @param datawriter Pointer to the datawriter to use for publishing window position updates.
+ */
+static void main_loop(WindowState_t *windows, WindowCommand *command, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
+{
+    return_value_t retval = RETVAL_ERROR;
+
+    // Continuously monitor for commands and update the windows if needed
+    while ( retval != RETVAL_EXIT )
+    {
+        // Check if a remote command was issued for our window_ids
+        if (command->id != NULL)
+        {
+            if ( RETVAL_OK == process_command(command->id, command->position, windows) )
+            {
+                // Reset the remote command structure after processing
+                command->id = "";
+            }
+        }
+
+        // Check if there is a local command and process it if valid
+        retval = check_local_command(windows);
+        if ( retval == RETVAL_OK )
+        {
+            // Reset any remote command that might have come before or during the processing
+            command->id = "";
+        }
+        else if ( retval == RETVAL_EXIT )
+        {
+            // Early exit if the "EXIT" command was issued
+            printf("Exiting the application\n");
+            break;
+        }
+
+        // Update the position and send DDS update if moving any window
+        publish_window_states(windows, 1, sample, datawriter);
+
+        // Sleep to allow the windows to move at the specified speed
+        OSAPI_Thread_sleep((RTI_UINT32)WINDOW_SPEED_MS);
+    }
+}
 
 
 /**
@@ -468,7 +539,7 @@ main_w_args(
     struct DDS_DataWriterQos dw_qos = DDS_DataWriterQos_INITIALIZER;
     DDS_DataReader *datareader;
     struct DDS_DataReaderQos dr_qos = DDS_DataReaderQos_INITIALIZER;
-    int ret_value = -1;
+    return_value_t retval = RETVAL_ERROR;
     DDS_ReturnCode_t retcode;
     WindowUpdate *sample = NULL;
 
@@ -551,59 +622,33 @@ main_w_args(
     // Publish the initial state of the windows (ignore any target position)
     publish_window_states(windows, 0, sample, datawriter);
 
-    // Continuously monitor for commands and update the windows if needed
-    while (1)
-    {
-        // Check if a remote command was issued for our window_ids
-        if (command.id != NULL)
-        {
-            if ( process_command(command.id, command.position, windows) )
-            {
-                // Reset the remote command structure after processing
-                command.id = "";
-            }
-        }
+    // Main loop
+    main_loop(windows, &command, sample, datawriter);
 
-        // Check if there is a local command and process it if valid
-        if ( check_local_command(windows) )
-        {
-            // Reset any remote command that might have come before or during the processing
-            command.id = "";
-        }
+    printf("Exiting the application\n");
 
-        // Update the position and send DDS update if moving any window
-        publish_window_states(windows, 1, sample, datawriter);
-
-        OSAPI_Thread_sleep((RTI_UINT32)WINDOW_SPEED_MS);
-    }
-
-    ret_value = 0;
+    retval = RETVAL_OK;
 
     done:
 
-    #ifndef RTI_CERT
+#ifndef RTI_CERT
     if (participant != NULL)
     {
         Application_delete(participant);
     }
-
     if (sample != NULL)
     {
         WindowUpdateTypeSupport_delete_data(sample);
     }
-
-    #endif
-    #ifndef RTI_CERT
     retcode = DDS_DataWriterQos_finalize(&dw_qos);
     if (retcode != DDS_RETCODE_OK)
     {
         printf("Cannot finalize DataWriterQos\n");
-        return -1;
+        return RETVAL_ERROR;
     }
+#endif
 
-    #endif
-
-    return ret_value;
+    return retval;
 }
 
 
