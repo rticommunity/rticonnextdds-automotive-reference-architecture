@@ -44,6 +44,7 @@
 #include <fcntl.h>
 #include <sys/select.h>
 #include <ctype.h>
+#include <strings.h>
 
 #include "rti_me_c.h"
 #include "wh_sm/wh_sm_history.h"
@@ -58,7 +59,7 @@
 
 // General configurations
 #define NUM_WINDOWS 2
-#define WINDOW_ID_STR_LEN 2
+#define WINDOW_ID_STR_LEN ID_STR_LEN
 #define WINDOW_POSITION_START 50
 #define WINDOW_POSITION_OPEN 0
 #define WINDOW_POSITION_CLOSED 100
@@ -75,6 +76,7 @@ typedef struct WindowState
 #define LOCAL_COMMANDS_STR {"OPEN", "CLOSE", "SET"}
 #define LOCAL_COMMANDS_STR_LEN {5, 6, 4}
 #define LOCAL_COMMANDS_TARGETS {WINDOW_POSITION_OPEN, WINDOW_POSITION_CLOSED}
+#define LOCAL_COMMANDS_INDEX_SET 2
 
 
 RTI_PRIVATE DDS_Publisher *
@@ -109,7 +111,7 @@ Application_create_datawriter(
     dw_qos->reliability.kind = DDS_BEST_EFFORT_RELIABILITY_QOS;
     #endif
     dw_qos->resource_limits.max_samples_per_instance = 1;
-    dw_qos->resource_limits.max_instances = 4;
+    dw_qos->resource_limits.max_instances = 2;
     dw_qos->resource_limits.max_samples = dw_qos->resource_limits.max_instances *
                                           dw_qos->resource_limits.max_samples_per_instance;
     dw_qos->durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
@@ -124,13 +126,11 @@ Application_create_datawriter(
                      NULL,
                      DDS_STATUS_MASK_NONE);
 
-    done:
-
     return datawriter;
 }
 
 
-static void
+RTI_PRIVATE void
 WindowCommandSubscriber_on_data_available(
     void *listener_data,
     DDS_DataReader * reader)
@@ -249,13 +249,21 @@ Application_create_datareader(
         &dr_listener,
         DDS_DATA_AVAILABLE_STATUS);
 
-    done:
-
     return datareader;
 }
 
 
-char *non_blocking_fgets(char *buffer, int size) {
+/**
+ * @brief Reads a line from the standard input without blocking.
+ *
+ * This function attempts to read a line from the standard input into the provided buffer.
+ * It does not block if there is no input available.
+ *
+ * @param buffer A pointer to the buffer where the read line will be stored.
+ * @param size The size of the buffer.
+ * @return A pointer to the buffer containing the read line, or NULL if no input is available.
+ */
+static char *non_blocking_fgets(char *buffer, int size) {
     int flags, available;
     fd_set readfds;
     struct timeval timeout;
@@ -295,25 +303,15 @@ char *non_blocking_fgets(char *buffer, int size) {
     return NULL; // No input available within the timeout, or error.
 }
 
-// Function to convert a string to lowercase
-void str_to_lower(char *str) {
-    for (int i = 0; str[i]; i++) {
-        str[i] = tolower(str[i]);
-    }
-}
-// Function to convert a string to uppercase
-void str_to_upper(char *str) {
-    for (size_t i = 0; i < strlen(str); i++) {
-        str[i] = toupper((unsigned char)str[i]);
-    }
-}
 
-
-/// @brief Publish the given window state, always (check_target==0) or if the target is different from the current position (check_target==1)
-/// @param window the WindowState_t to publish
-/// @param check_target 0 to publish regardless of the target and current position, 1 to publish only if the target is different from the current position
-/// @param sample the sample instance to use for publishing
-/// @param datawriter the datawriter to use for publishing
+/**
+ * @brief Publish the given window state, always (check_target==0) or if the target is different from the current position (check_target==1)
+ * 
+ * @param window the WindowState_t to publish
+ * @param check_target 0 to publish regardless of the target and current position, 1 to publish only if the target is different from the current position
+ * @param sample the sample instance to use for publishing
+ * @param datawriter the datawriter to use for publishing
+ */
 static void publish_window_state(WindowState_t *window, int check_target, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
 {
     DDS_ReturnCode_t retcode;
@@ -339,11 +337,14 @@ static void publish_window_state(WindowState_t *window, int check_target, Window
     }
 }
 
-/// @brief Publish the window state for all windows
-/// @param window the array of WindowState_t to publish
-/// @param check_target for each window: 0 to publish regardless of the target and current position, 1 to publish only if the target is different from the current position
-/// @param sample the sample instance to use for publishing
-/// @param datawriter the datawriter to use for publishing
+/**
+ * @brief Publish the window state for all windows
+ *
+ * @param windows The array of WindowState_t to publish.
+ * @param check_target For each window: 0 to publish regardless of the target and current position, 1 to publish only if the target is different from the current position.
+ * @param sample The sample instance to use for publishing.
+ * @param datawriter The datawriter to use for publishing.
+ */
 static void publish_window_states(WindowState_t *windows, int check_target, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
 {
     for (int i = 0; i < NUM_WINDOWS; i++)
@@ -354,11 +355,14 @@ static void publish_window_states(WindowState_t *windows, int check_target, Wind
 
 
  
-/// @brief Process a command (remote or local) by checking for a matching window id and updating the target position
-/// @param window_id string to match in the windows array.
-/// @param target target position to set for the window in the array.
-/// @param windows array of windows.
-/// @return 1 if command processed sucessfully, 0 otherwise
+/**
+ * @brief Process a command (remote or local) by checking for a matching window id and updating the target position.
+ * 
+ * @param window_id String to match in the windows array.
+ * @param target Target position to set for the window in the array.
+ * @param windows Array of windows.
+ * @return 1 if command processed successfully, 0 otherwise.
+ */
 static int process_command(char * window_id, int target, WindowState_t *windows)
 {
     for (int i = 0; i < NUM_WINDOWS; i++)
@@ -411,7 +415,7 @@ static int check_local_command(WindowState_t * windows)
                 int target = commands_targets[i];
                 
                 // Check for the special case of setting the specific target position
-                if (commands[i] == "SET")
+                if ( i == LOCAL_COMMANDS_INDEX_SET )
                 {
                     char *target_str = command_local + commands_str_len[i] + WINDOW_ID_STR_LEN;
                     target = atoi(target_str);
@@ -536,7 +540,7 @@ main_w_args(
     while (1)
     {
         // Check if a remote command was issued for our window_ids
-        if (command.id)
+        if (command.id != NULL)
         {
             if ( process_command(command.id, command.position, windows) )
             {

@@ -1,15 +1,18 @@
 
 const string TOPIC_WINDOW_COMMAND = "WindowCommand";
 const string TOPIC_WINDOW_UPDATE = "WindowUpdate";
+const uint8 ID_STR_LEN = 2;
+
+typedef string<ID_STR_LEN> window_id_t;
 
 /* Commands to give the window controller a target position */
 struct WindowCommand {
-    @key string<4> id;
+    @key window_id_t id;
     unsigned short position;
 };
 
 /* Updates from the window controller on the current position */
 struct WindowUpdate {
-    @key string<4> id;
+    @key window_id_t id;
     unsigned short position;
 };

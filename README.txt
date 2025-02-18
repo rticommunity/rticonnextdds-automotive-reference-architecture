@@ -12,15 +12,15 @@ Basic example for a window control use-case.
 1. Compile the Micro app as usual using rtime-make
 2. Execute the Micro app as follows:
 
-(venv7305) mzain@RTISP-10122:~/Dev/WindowExample$ ./objs/x64Linux4gcc7.3.0/Window_publisher -ids FL,FR
+(connext) user@linux:~/Dev/WindowExample$ ./objs/x64Linux4gcc7.3.0/WindowApplication -ids FL,FR
 
 and optionally a second app:
 
-(venv7305) mzain@RTISP-10122:~/Dev/WindowExample$ ./objs/x64Linux4gcc7.3.0/Window_publisher -ids RL,RR
+(connext) user@linux:~/Dev/WindowExample$ ./objs/x64Linux4gcc7.3.0/WindowApplication -ids RL,RR
 
 3. Execute the cockpit app as follows:
 
-(venv7305) mzain@RTISP-10122:~/Dev/WindowExample$ python3 cockpit.py 
+(connext) user@linux:~/Dev/WindowExample$ python3 cockpit.py 
 
 4. On the Micro app, you may enter the following commands to move a window. You should see the window position updating on the cockpit.py (or if you're subscribing via Admin Console)
 - open FL
