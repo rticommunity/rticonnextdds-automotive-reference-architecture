@@ -1,3 +1,41 @@
+/**
+ * @file WindowApplication.c
+ * 
+ * @brief Implementation of a window zonal controller based on Connext Micro 2.4.14 for an example system.
+ * 
+ * The example system is expected to contain a total of four windows, managed by a total of two WindowApplication.
+ * 
+ * The application listens for commands, either remotely (DDS) or local (stdin).
+ * The application processes the commands to change the window position, e.g. to fully open the window. 
+ * 
+ * @define NUM_WINDOWS Number of windows in the application.
+ * @define WINDOW_ID_STR_LEN Length of the window ID string.
+ * @define WINDOW_POSITION_START Initial position of the windows.
+ * @define WINDOW_POSITION_OPEN Position value representing an open window.
+ * @define WINDOW_POSITION_CLOSED Position value representing a closed window.
+ * 
+ * @typedef WindowState_t
+ * @brief Structure to represent the state of a window.
+ * 
+ * @struct WindowState
+ * @brief Represents the state of a window including its ID, current position, and target position.
+ * 
+ * @var WindowState::id
+ * ID of the window.
+ * 
+ * @var WindowState::position
+ * Current position of the window.
+ * 
+ * @var WindowState::target
+ * Target position of the window.
+ * 
+ * For processing local commands, the below configurations are relevant:
+ * @define MAX_INPUT_SIZE Maximum size of the input buffer for local commands via stdin.
+ * @define NUM_COMMANDS Number of commands that can be handled by the application.
+ *
+ **/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,8 +56,9 @@
 #include "WindowApplicationCommon.h"
 
 
-#define WINDOW_ID_STR_LEN 2
+// General configurations
 #define NUM_WINDOWS 2
+#define WINDOW_ID_STR_LEN 2
 #define WINDOW_POSITION_START 50
 #define WINDOW_POSITION_OPEN 0
 #define WINDOW_POSITION_CLOSED 100
@@ -30,7 +69,12 @@ typedef struct WindowState
     int target;
 } WindowState_t;
 
+// Configurations for handling of local commands via stdin
 #define MAX_INPUT_SIZE 11
+#define NUM_COMMANDS 3
+#define LOCAL_COMMANDS_STR {"OPEN", "CLOSE", "SET"}
+#define LOCAL_COMMANDS_STR_LEN {5, 6, 4}
+#define LOCAL_COMMANDS_TARGETS {WINDOW_POSITION_OPEN, WINDOW_POSITION_CLOSED}
 
 
 RTI_PRIVATE DDS_Publisher *
