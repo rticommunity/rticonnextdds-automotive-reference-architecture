@@ -374,6 +374,62 @@ static int process_command(char * window_id, int target, WindowState_t *windows)
 }
 
 
+/**
+ * @brief Checks the local command for the given window state.
+ *
+ * This function processes the provided command and determines if it is a valid
+ * command for the current window state.
+ *
+ * @param windows The array of windows, which will be updated with the target position if the command is valid.
+ * @return 1 if command processed sucessfully, 0 otherwise
+ */
+static int check_local_command(WindowState_t * windows)
+{
+    char input[MAX_INPUT_SIZE];
+    char *command_local = non_blocking_fgets(input, MAX_INPUT_SIZE);
+    char *commands[NUM_COMMANDS] = LOCAL_COMMANDS_STR;
+    int commands_targets[NUM_COMMANDS] = LOCAL_COMMANDS_TARGETS;
+    int commands_str_len[NUM_COMMANDS] = LOCAL_COMMANDS_STR_LEN;
+    int retval = 0;
+    
+    if (command_local != NULL)
+    {
+        // Loop over the array of possible local commands
+        for (int i=0; i < NUM_COMMANDS; i++)
+        {
+            // Case insensitive check to compare the stdin command to possible local commands
+            if (strncasecmp(command_local, commands[i], commands_str_len[i]-1) == 0)
+            {
+                // The stdin command matches one of the valid local commands
+                
+                // Extract the window id from the stdin command
+                char window_id[WINDOW_ID_STR_LEN + 1];
+                strncpy(window_id, command_local + commands_str_len[i], WINDOW_ID_STR_LEN);
+                window_id[WINDOW_ID_STR_LEN] = '\0'; // Null-terminate the string
+                
+                // Set the target position accordingly
+                int target = commands_targets[i];
+                
+                // Check for the special case of setting the specific target position
+                if (commands[i] == "SET")
+                {
+                    char *target_str = command_local + commands_str_len[i] + WINDOW_ID_STR_LEN;
+                    target = atoi(target_str);
+                    target = (target < 0) ? 0 : (target > 100) ? 100 : target;
+                }
+
+                // Return with success or failure in processing the command
+                retval = process_command(window_id, target, windows);
+
+                break;
+            }
+        }
+    }
+
+    return retval;
+}
+
+
 
 static int
 main_w_args(
@@ -489,43 +545,11 @@ main_w_args(
             }
         }
 
-        // Check if there is a local command on stdin (non-blocking) and store the target_id
-        char input[MAX_INPUT_SIZE];
-        char *command_local = non_blocking_fgets(input, MAX_INPUT_SIZE);
-        #define NUM_COMMANDS 3
-        const char *commands[NUM_COMMANDS] = {"OPEN", "CLOSE", "SET"};
-        const int commands_targets[NUM_COMMANDS] = {WINDOW_POSITION_OPEN, WINDOW_POSITION_CLOSED};
-        const int commands_len[NUM_COMMANDS] = {5, 6, 4};
-        if (command_local != NULL)
+        // Check if there is a local command and process it if valid
+        if ( check_local_command(windows) )
         {
-            // Loop over the array of possible local commands
-            for (int i=0; i<NUM_COMMANDS; i++)
-            {
-                // Case insensitive check to compare the stdin command to possible local commands
-                if (strncasecmp(command_local, commands[i], commands_len[i]-1) == 0)
-                {
-                    // The stdin command matches one of the valid local commands
-                    // Extract the window id from the stdin command
-                    char window_id[WINDOW_ID_STR_LEN + 1];
-                    strncpy(window_id, command_local + commands_len[i], WINDOW_ID_STR_LEN);
-                    window_id[WINDOW_ID_STR_LEN] = '\0'; // Null-terminate the string
-                    // Set the target position accordingly
-                    int target = commands_targets[i];
-                    // Check for the special case of setting the specific target position
-                    if (commands[i] == "SET")
-                    {
-                        char *target_str = command_local + commands_len[i] + WINDOW_ID_STR_LEN;
-                        target = atoi(target_str);
-                        target = (target < 0) ? 0 : (target > 100) ? 100 : target;
-                    }
-                    if ( process_command(window_id, target, windows) )
-                    {
-                        // Reset any remote command that might have come before or during the processing
-                        command.id = "";
-                    }
-                    break;
-                }
-            }
+            // Reset any remote command that might have come before or during the processing
+            command.id = "";
         }
 
         // Update the position and send DDS update if moving any window
