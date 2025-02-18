@@ -4,7 +4,7 @@ import threading
 import Window
 
 
-class Cockpit:
+class CockpitConnext:
 
     DOMAIN_ID = 0
 
@@ -92,26 +92,3 @@ class Cockpit:
         # Close entities and participant 
         self.participant.close_contained_entities()
         self.participant.close()
-
-
-
-
-if __name__ == "__main__":
-    app = Cockpit()
-        
-    import gui
-
-    guiapp = gui.CockpitGUI()
-
-    def act_on_samples(samples):
-        for sample in samples:
-            guiapp.update_position(sample.id, sample.position)
-    app.act_on_samples = act_on_samples
-
-    guiapp.window_open = app.send_open
-    guiapp.window_close = app.send_close
-    guiapp.window_set = app.send_target
-
-    guiapp.start()
-
-    app.close()
