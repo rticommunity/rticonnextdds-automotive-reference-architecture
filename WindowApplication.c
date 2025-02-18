@@ -18,6 +18,7 @@
 #include "WindowApplicationCommon.h"
 
 
+#define WINDOW_ID_STR_LEN 2
 #define NUM_WINDOWS 2
 #define WINDOW_POSITION_START 50
 #define WINDOW_POSITION_OPEN 0
@@ -29,7 +30,7 @@ typedef struct WindowState
     int target;
 } WindowState_t;
 
-#define MAX_INPUT_SIZE 9 // OPEN FR, CLOSE FL
+#define MAX_INPUT_SIZE 11
 
 
 RTI_PRIVATE DDS_Publisher *
@@ -318,7 +319,7 @@ static int process_command(char * window_id, int target, WindowState_t *windows)
 {
     for (int i = 0; i < NUM_WINDOWS; i++)
     {
-        if (strcmp(window_id, windows[i].id) == 0)
+        if (strcasecmp(window_id, windows[i].id) == 0)
         {
             windows[i].target = target;
             printf("Processed command %s %d\n", window_id, target);
@@ -447,33 +448,39 @@ main_w_args(
         // Check if there is a local command on stdin (non-blocking) and store the target_id
         char input[MAX_INPUT_SIZE];
         char *command_local = non_blocking_fgets(input, MAX_INPUT_SIZE);
-        if (command_local != NULL) {
-            // Case insensitive check for local commands
-            str_to_lower(command_local);
-            
-            if (strncmp(command_local, "open ", 5) == 0 && strlen(command_local) == 7)
+        #define NUM_COMMANDS 3
+        const char *commands[NUM_COMMANDS] = {"OPEN", "CLOSE", "SET"};
+        const int commands_targets[NUM_COMMANDS] = {WINDOW_POSITION_OPEN, WINDOW_POSITION_CLOSED};
+        const int commands_len[NUM_COMMANDS] = {5, 6, 4};
+        if (command_local != NULL)
+        {
+            // Loop over the array of possible local commands
+            for (int i=0; i<NUM_COMMANDS; i++)
             {
-                char * window_id = command_local + 5*sizeof(char);
-                str_to_upper(window_id);
-                if ( process_command(window_id, WINDOW_POSITION_OPEN, windows) )
+                // Case insensitive check to compare the stdin command to possible local commands
+                if (strncasecmp(command_local, commands[i], commands_len[i]-1) == 0)
                 {
-                    // Reset any remote command that might have come before or during the processing
-                    command.id = "";
+                    // The stdin command matches one of the valid local commands
+                    // Extract the window id from the stdin command
+                    char window_id[WINDOW_ID_STR_LEN + 1];
+                    strncpy(window_id, command_local + commands_len[i], WINDOW_ID_STR_LEN);
+                    window_id[WINDOW_ID_STR_LEN] = '\0'; // Null-terminate the string
+                    // Set the target position accordingly
+                    int target = commands_targets[i];
+                    // Check for the special case of setting the specific target position
+                    if (commands[i] == "SET")
+                    {
+                        char *target_str = command_local + commands_len[i] + WINDOW_ID_STR_LEN;
+                        target = atoi(target_str);
+                        target = (target < 0) ? 0 : (target > 100) ? 100 : target;
+                    }
+                    if ( process_command(window_id, target, windows) )
+                    {
+                        // Reset any remote command that might have come before or during the processing
+                        command.id = "";
+                    }
+                    break;
                 }
-            }
-            else if (strncmp(command_local, "close ", 6) == 0 && strlen(command_local) == 8)
-            {
-                char * window_id = command_local + 6*sizeof(char);
-                str_to_upper(window_id);
-                if ( process_command(window_id, WINDOW_POSITION_CLOSED, windows) )
-                {
-                    // Reset any remote command that might have come before or during the processing
-                    command.id = "";
-                }
-            }
-            else if (strlen(command_local) > 0)
-            {
-                printf("Invalid command\n");
             }
         }
 
@@ -520,7 +527,7 @@ main(int argc, char **argv)
     char *peer = NULL;
     char *udp_intf = NULL;
     DDS_Long sleep_time = 50;
-    char * window_ids[2] = {"AB", "CD"};
+    char * window_ids[WINDOW_ID_STR_LEN] = {"AB", "CD"};
 
     for (i = 1; i < argc; ++i)
     {
