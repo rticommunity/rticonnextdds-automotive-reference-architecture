@@ -103,6 +103,14 @@ if __name__ == "__main__":
     if USE_GUI:
         import tkinter as tk
         from tkinter import ttk
+
+        def on_pbar_click(event, window_id):
+            pbar = window_widgets[window_id]["pbar"]
+            pbar_height = pbar.winfo_height()
+            click_position = event.y
+            new_value = 100 - int((click_position / pbar_height) * 100)
+            app._send_target(window_id, new_value)
+
         root = tk.Tk()
         frame_top = ttk.Frame(root)
         label = ttk.Label(frame_top, text="Window ids: ")
@@ -125,6 +133,7 @@ if __name__ == "__main__":
             window_widgets[window_id]["btns_frame"] = btns_frame = ttk.Frame(frame_bottom)
             window_widgets[window_id]["btn_up"] =   btn_up =   ttk.Button(btns_frame, text="UP (close)",  command=lambda id=window_id: app.send_close(id))
             window_widgets[window_id]["btn_down"] = btn_down = ttk.Button(btns_frame, text="DOWN (open)", command=lambda id=window_id: app.send_open(id) )
+            pbar.bind("<Button-1>", lambda event, id=window_id: on_pbar_click(event, id))
             pbar.pack(side=tk.LEFT, padx=5, pady=5)
             pbar_frame.pack(side=tk.LEFT, padx=5, pady=5)
             btn_up.pack(padx=5, pady=5)
