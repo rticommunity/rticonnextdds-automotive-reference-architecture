@@ -23,7 +23,6 @@ Application_help(char *appname)
     printf("-domain <id>            - DomainId (default: 0)\n");
     printf("-udp_intf <intf>        - udp interface (no default)\n");
     printf("-peer <address>         - peer address (no default)\n");
-    printf("-sleep <ms>             - sleep between sends (default 1s)\n");
     printf("-ids <id1>,<id2>        - ids for each window (default AB,CD)\n");
     printf("\n");
 }

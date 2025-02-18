@@ -13,6 +13,7 @@
  * @define WINDOW_POSITION_START Initial position of the windows.
  * @define WINDOW_POSITION_OPEN Position value representing an open window.
  * @define WINDOW_POSITION_CLOSED Position value representing a closed window.
+ * @define WINDOW_SPEED_MS Time in milliseconds to wait between window position updates.
  * 
  * @typedef WindowState_t
  * @brief Structure to represent the state of a window.
@@ -32,6 +33,10 @@
  * For processing local commands, the below configurations are relevant:
  * @define MAX_INPUT_SIZE Maximum size of the input buffer for local commands via stdin.
  * @define NUM_COMMANDS Number of commands that can be handled by the application.
+ * @define LOCAL_COMMANDS_STR Array of strings for the valid local commands.
+ * @define LOCAL_COMMANDS_STR_LEN Array of lengths of the valid local commands.
+ * @define LOCAL_COMMANDS_TARGETS Array of target positions for each of the valid local commands.
+ * @define LOCAL_COMMANDS_INDEX_SET Index of the "SET" command in the local commands array.
  *
  **/
 
@@ -63,6 +68,7 @@
 #define WINDOW_POSITION_START 50
 #define WINDOW_POSITION_OPEN 0
 #define WINDOW_POSITION_CLOSED 100
+#define WINDOW_SPEED_MS 50
 typedef struct WindowState
 {
     char * id;
@@ -174,7 +180,6 @@ WindowCommandSubscriber_on_data_available(
             WindowCommand * remote_command = (WindowCommand *) listener_data;
             remote_command->id = sample->id;
             remote_command->position = sample->position;
-            printf("Incoming command: %s %d\n", remote_command->id, remote_command->position);
         }
         else
         {
@@ -435,12 +440,22 @@ static int check_local_command(WindowState_t * windows)
 
 
 
+/**
+ * @brief Main function with arguments for the Window Application.
+ *
+ * It initializes necessary the Connext Micro components and entities
+ * and starts the application loop.
+ *
+ * @param domain_id The DDS domain_id to use.
+ * @param udp_intf  The specific UDP interface to use (or NULL for default).
+ * @param peer      The specific peer address to use for the participant (or NULL for default).
+ * @return An integer representing the exit status of the application.
+ */
 static int
 main_w_args(
     DDS_Long domain_id,
     char *udp_intf,
     char *peer,
-    DDS_Long sleep_time,
     char **window_ids)
 {
     DDS_DomainParticipant *participant;
@@ -559,7 +574,7 @@ main_w_args(
         // Update the position and send DDS update if moving any window
         publish_window_states(windows, 1, sample, datawriter);
 
-        OSAPI_Thread_sleep((RTI_UINT32)sleep_time);
+        OSAPI_Thread_sleep((RTI_UINT32)WINDOW_SPEED_MS);
     }
 
     ret_value = 0;
@@ -591,6 +606,12 @@ main_w_args(
     return ret_value;
 }
 
+
+/**
+ * @brief Entry point for the WindowApplication.
+ *
+ * Refer to WindowApplicationCommon:Application_help for more details on the command line arguments.
+ */
 int
 main(int argc, char **argv)
 {
@@ -598,7 +619,6 @@ main(int argc, char **argv)
     DDS_Long domain_id = 0;
     char *peer = NULL;
     char *udp_intf = NULL;
-    DDS_Long sleep_time = 50;
     char * window_ids[WINDOW_ID_STR_LEN] = {"AB", "CD"};
 
     for (i = 1; i < argc; ++i)
@@ -633,16 +653,6 @@ main(int argc, char **argv)
             }
             peer = argv[i];
         }
-        else if (!strcmp(argv[i], "-sleep"))
-        {
-            ++i;
-            if (i == argc)
-            {
-                printf("-sleep_time <sleep_time>\n");
-                return -1;
-            }
-            sleep_time = (DDS_Long)strtol(argv[i], NULL, 0);
-        }
         else if (!strcmp(argv[i], "-ids"))
         {
             ++i;
@@ -675,6 +685,6 @@ main(int argc, char **argv)
             return -1;
         }
     }    
-    printf("Using window_ids: %s , %s\n", window_ids[0], window_ids[1]);
-    return main_w_args(domain_id, udp_intf, peer, sleep_time, window_ids);
+    
+    return main_w_args(domain_id, udp_intf, peer, window_ids);
 }
