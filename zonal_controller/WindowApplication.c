@@ -65,6 +65,11 @@
 #include "WindowApplicationCommon.h"
 
 
+
+/* --------------------------------------------
+ * Configurations */
+
+
 // General configurations
 #define NUM_WINDOWS 2
 #define WINDOW_ID_STR_LEN ID_STR_LEN
@@ -79,6 +84,7 @@ typedef struct WindowState
     int target;
 } WindowState_t;
 
+
 // Configurations for handling of local commands via stdin
 #define MAX_INPUT_SIZE 11
 #define NUM_COMMANDS 4
@@ -88,6 +94,7 @@ typedef struct WindowState
 #define LOCAL_COMMANDS_INDEX_SET 2
 #define LOCAL_COMMANDS_INDEX_EXIT 3
 
+
 // Return values of the static functions
 typedef enum
 {
@@ -96,6 +103,25 @@ typedef enum
     RETVAL_EXIT = 2
 } return_value_t;
 
+
+
+/* --------------------------------------------
+ * Connext Micro specific functions */
+
+
+/**
+ * @brief Creates a DDS Publisher for the given DomainParticipant.
+ *
+ * This function initializes and returns a DDS Publisher in the 
+ * provided DomainParticipant, with the intention to use one 
+ * publisher for all writers in the application if possible, so as
+ * to optimise resource usage.
+ *
+ * @param participant Pointer to the DDS_DomainParticipant for which the 
+ *                    Publisher is to be created.
+ * @return A pointer to the created DDS_Publisher, or NULL if the creation 
+ *         fails.
+ */
 RTI_PRIVATE DDS_Publisher *
 Application_create_publisher(DDS_DomainParticipant *participant)
 {
@@ -114,11 +140,27 @@ Application_create_publisher(DDS_DomainParticipant *participant)
     return publisher;
 }
 
+
+/**
+ * @brief Creates a DDS DataWriter for the given Publisher and Topic.
+ *
+ * This function initializes and returns a DDS DataWriter in the 
+ * provided Publisher for the specified Topic.
+ *
+ * @param publisher Pointer to the DDS_Publisher for which the 
+ *                  DataWriter is to be created.
+ * @param topic     Pointer to the DDS_Topic for which the DataWriter 
+ *                  is to be created.
+ * @param dw_qos    Pointer to the DDS_DataWriterQos structure to be used 
+ *                  for creating the DataWriter.
+ * @return A pointer to the created DDS_DataWriter, or NULL if the creation 
+ *         fails.
+ */
 RTI_PRIVATE DDS_DataWriter *
 Application_create_datawriter(
     DDS_Publisher *publisher,
-        DDS_Topic *topic,
-        struct DDS_DataWriterQos *dw_qos)
+    DDS_Topic *topic,
+    struct DDS_DataWriterQos *dw_qos)
 {
     DDS_DataWriter *datawriter;
 
@@ -147,6 +189,21 @@ Application_create_datawriter(
 }
 
 
+/**
+ * @brief Listener function to handle DDS commands to move the windows.
+ *
+ * This function is called when new data is available for the WindowCommand
+ * DataReader. It processes the received data samples and updates the 
+ * listener_data with the latest valid sample.
+ *
+ * @param listener_data Pointer to user-defined data that is passed to the 
+ *                      listener. In this case, it is expected to be a 
+ *                      pointer to a WindowCommand structure. This is how
+ *                      the received command is shared to the application
+ *                      code for further processing.
+ * @param reader        Pointer to the DDS_DataReader from which the data 
+ *                      is being read.
+ */
 RTI_PRIVATE void
 WindowCommandSubscriber_on_data_available(
     void *listener_data,
@@ -201,15 +258,28 @@ WindowCommandSubscriber_on_data_available(
     WindowCommandDataReader_return_loan(hw_reader, &sample_seq, &info_seq);
 
     done:
-    #ifndef RTI_CERT
+#ifndef RTI_CERT
     WindowCommandSeq_finalize(&sample_seq);
     DDS_SampleInfoSeq_finalize(&info_seq);
-    #else
+#else
     return;
-    #endif
+#endif
 }
 
 
+/**
+ * @brief Creates a DDS Subscriber for the given DomainParticipant.
+ *
+ * This function initializes and returns a DDS Subscriber in the 
+ * provided DomainParticipant, with the intention to use one 
+ * subscriber for all readers in the application if possible, so as
+ * to optimise resource usage.
+ *
+ * @param participant Pointer to the DDS_DomainParticipant for which the 
+ *                    Subscriber is to be created.
+ * @return A pointer to the created DDS_Subscriber, or NULL if the creation 
+ *         fails.
+ */
 RTI_PRIVATE DDS_Subscriber *
 Application_create_subscriber(DDS_DomainParticipant *participant)
 {
@@ -228,6 +298,27 @@ Application_create_subscriber(DDS_DomainParticipant *participant)
     return subscriber;
 }
 
+
+/**
+ * @brief Creates a DDS DataReader for the given Subscriber and Topic.
+ *
+ * This function initializes and returns a DDS DataReader in the 
+ * provided Subscriber for the specified Topic.
+ *
+ * @param subscriber Pointer to the DDS_Subscriber for which the 
+ *                   DataReader is to be created.
+ * @param topic      Pointer to the DDS_Topic for which the DataReader 
+ *                   is to be created.
+ * @param dr_qos     Pointer to the DDS_DataReaderQos structure to be used 
+ *                   for creating the DataReader.
+ * @param listener_data Pointer to user-defined data that is passed to the 
+ *                      listener. In this case, it is expected to be a 
+ *                      pointer to a WindowCommand structure. This is how
+ *                      the received command is shared to the application
+ *                      code for further processing.
+ * @return A pointer to the created DDS_DataReader, or NULL if the creation 
+ *         fails.
+ */
 RTI_PRIVATE DDS_DataReader *
 Application_create_datareader(
     DDS_Subscriber *subscriber,
@@ -267,6 +358,11 @@ Application_create_datareader(
 
     return datareader;
 }
+
+
+
+/* --------------------------------------------
+ * Application specific functions */
 
 
 /**
@@ -353,6 +449,7 @@ static void publish_window_state(WindowState_t *window, int check_target, Window
     }
 }
 
+
 /**
  * @brief Publish the window state for all windows
  *
@@ -370,7 +467,6 @@ static void publish_window_states(WindowState_t *windows, int check_target, Wind
 }
 
 
- 
 /**
  * @brief Process a command (remote or local) by checking for a matching window id and updating the target position.
  * 
