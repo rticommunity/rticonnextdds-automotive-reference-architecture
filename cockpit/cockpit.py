@@ -1,35 +1,7 @@
-import rti.idl as idl
-
-
-TOPIC_WINDOW_COMMAND = "WindowCommand"
-TOPIC_WINDOW_UPDATE = "WindowUpdate"
-
-
-@idl.struct(
-    member_annotations = {
-        'id': [idl.key, idl.bound(4)],
-    }
-)
-class WindowCommand:
-    id: str = ""
-    position: idl.uint16 = 0
-
-
-@idl.struct(
-    member_annotations = {
-        'id': [idl.key, idl.bound(4)],
-    }
-)
-class WindowUpdate:
-    id: str = ""
-    position: idl.uint16 = 0
-
-
-
-
-
 import rti.connextdds as dds
 import threading
+
+import Window
 
 
 class Cockpit:
@@ -39,12 +11,12 @@ class Cockpit:
     def __init__(self):
         """Set up the DDS instances."""
 
-        self.sample_update = WindowUpdate()
+        self.sample_update = Window.WindowUpdate()
         
         # DDS instances
         self.participant = dds.DomainParticipant(self.DOMAIN_ID)
-        self.topic_update = dds.Topic(self.participant, TOPIC_WINDOW_UPDATE, WindowUpdate)
-        self.topic_command = dds.Topic(self.participant, TOPIC_WINDOW_COMMAND, WindowCommand)
+        self.topic_update = dds.Topic(self.participant, Window.TOPIC_WINDOW_UPDATE, Window.WindowUpdate)
+        self.topic_command = dds.Topic(self.participant, Window.TOPIC_WINDOW_COMMAND, Window.WindowCommand)
         self.writer = dds.DataWriter(self.topic_command)
         # Create a DataReader with Transient Local Durability
         datareader_qos = dds.DataReaderQos()
@@ -91,7 +63,7 @@ class Cockpit:
     
 
     def _send_target(self, window_id, target):
-        sample_command = WindowCommand()
+        sample_command = Window.WindowCommand()
         sample_command.id = window_id
         sample_command.position = target 
         self.writer.write(sample_command)
