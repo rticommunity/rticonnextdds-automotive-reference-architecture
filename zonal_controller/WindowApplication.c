@@ -364,7 +364,9 @@ Application_create_datareader(
  * @param size The size of the buffer.
  * @return A pointer to the buffer containing the read line, or NULL if no input is available.
  */
-static char *non_blocking_fgets(char *buffer, int size) {
+RTI_PRIVATE char *
+non_blocking_fgets(char *buffer, int size)
+{
     int flags, available;
     fd_set readfds;
     struct timeval timeout;
@@ -385,11 +387,15 @@ static char *non_blocking_fgets(char *buffer, int size) {
 
     available = select(1, &readfds, NULL, NULL, &timeout); // Check if input is available
 
-    if (available > 0) {  // Input is available
-        if (fgets(buffer, size, stdin) != NULL) {
+    if (available > 0)
+    {
+        // Input is available
+        if (fgets(buffer, size, stdin) != NULL)
+        {
             // Remove trailing newline if present (fgets keeps it)
             int len = strlen(buffer);
-            if (len > 0 && buffer[len - 1] == '\n') {
+            if (len > 0 && buffer[len - 1] == '\n')
+            {
                 buffer[len - 1] = '\0';
             }
             
@@ -413,7 +419,8 @@ static char *non_blocking_fgets(char *buffer, int size) {
  * @param sample the sample instance to use for publishing
  * @param datawriter the datawriter to use for publishing
  */
-static void publish_window_state(WindowState_t *window, int check_target, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
+RTI_PRIVATE void 
+publish_window_state(WindowState_t *window, int check_target, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
 {
     DDS_ReturnCode_t retcode;
 
@@ -447,7 +454,8 @@ static void publish_window_state(WindowState_t *window, int check_target, Window
  * @param sample The sample instance to use for publishing.
  * @param datawriter The datawriter to use for publishing.
  */
-static void publish_window_states(WindowState_t *windows, int check_target, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
+RTI_PRIVATE void 
+publish_window_states(WindowState_t *windows, int check_target, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
 {
     for (int i = 0; i < NUM_WINDOWS; i++)
     {
@@ -464,7 +472,8 @@ static void publish_window_states(WindowState_t *windows, int check_target, Wind
  * @param windows Array of windows.
  * @return OK if command processed successfully, ERROR or otherwise.
  */
-static return_value_t process_command(char * window_id, int target, WindowState_t *windows)
+RTI_PRIVATE return_value_t 
+process_command(char * window_id, int target, WindowState_t *windows)
 {
     for (int i = 0; i < NUM_WINDOWS; i++)
     {
@@ -488,7 +497,8 @@ static return_value_t process_command(char * window_id, int target, WindowState_
  * @param windows The array of windows, which will be updated with the target position if the command is valid.
  * @return OK if command processed sucessfully, ERROR otherwise
  */
-static return_value_t check_local_command(WindowState_t * windows)
+RTI_PRIVATE return_value_t 
+check_local_command(WindowState_t * windows)
 {
     char input[MAX_INPUT_SIZE];
     char *command_local = non_blocking_fgets(input, MAX_INPUT_SIZE);
@@ -556,7 +566,8 @@ static return_value_t check_local_command(WindowState_t * windows)
  * @param sample     Pointer to the sample to use for publishing window position updates.
  * @param datawriter Pointer to the datawriter to use for publishing window position updates.
  */
-static void main_loop(WindowState_t *windows, WindowCommand *command, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
+RTI_PRIVATE void 
+main_loop(WindowState_t *windows, WindowCommand *command, WindowUpdate *sample, WindowUpdateDataWriter *datawriter)
 {
     return_value_t retval = RETVAL_ERROR;
 
@@ -607,7 +618,7 @@ static void main_loop(WindowState_t *windows, WindowCommand *command, WindowUpda
  * @param peer      The specific peer address to use for the participant (or NULL for default).
  * @return An integer representing the exit status of the application.
  */
-static int
+RTI_PRIVATE int
 main_w_args(
     DDS_Long domain_id,
     char *udp_intf,
