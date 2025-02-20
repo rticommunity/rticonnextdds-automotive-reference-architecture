@@ -231,8 +231,7 @@ WindowCommandSubscriber_on_data_available(
         printf("failed to take data, retcode(%d)\n", retcode);
         goto done;
     }
-
-    /* Print each valid sample taken */
+    
     for (i = 0; i < WindowCommandSeq_get_length(&sample_seq); ++i)
     {
         sample_info = DDS_SampleInfoSeq_get_reference(&info_seq, i);
