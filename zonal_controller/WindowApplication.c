@@ -620,7 +620,6 @@ main_w_args(
     DDS_Subscriber *subscriber;
     DDS_Topic *topic_window_command;
     DDS_Topic *topic_window_update;
-    DDS_DataWriter *_datawriter;
     WindowUpdateDataWriter *datawriter;
     struct DDS_DataWriterQos dw_qos = DDS_DataWriterQos_INITIALIZER;
     DDS_DataReader *datareader;
@@ -678,13 +677,13 @@ main_w_args(
         goto done;
     }
 
-    _datawriter = Application_create_datawriter(publisher, topic_window_update, &dw_qos);
-    if (_datawriter == NULL)
+    datawriter = (WindowUpdateDataWriter*) Application_create_datawriter(publisher, topic_window_update, &dw_qos);
+    if (datawriter == NULL)
     {
         printf("datawriter == NULL\n");
         goto done;
     }
-    datawriter = WindowUpdateDataWriter_narrow(_datawriter);
+    datawriter = WindowUpdateDataWriter_narrow((DDS_DataWriter *) datawriter);
 
     // Structure to hold window commands to process
     WindowCommand command;
