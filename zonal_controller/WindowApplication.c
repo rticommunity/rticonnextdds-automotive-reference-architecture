@@ -164,17 +164,13 @@ Application_create_datawriter(
 {
     DDS_DataWriter *datawriter;
 
-    #ifdef USE_RELIABLE_QOS
-    dw_qos->reliability.kind = DDS_RELIABLE_RELIABILITY_QOS;
-    #else
-    dw_qos->reliability.kind = DDS_BEST_EFFORT_RELIABILITY_QOS;
-    #endif
     dw_qos->resource_limits.max_samples_per_instance = 1;
     dw_qos->resource_limits.max_instances = 2;
     dw_qos->resource_limits.max_samples = dw_qos->resource_limits.max_instances *
                                           dw_qos->resource_limits.max_samples_per_instance;
     dw_qos->durability.kind = DDS_TRANSIENT_LOCAL_DURABILITY_QOS;
     dw_qos->history.depth = 1;
+    dw_qos->reliability.kind = DDS_RELIABLE_RELIABILITY_QOS;
     dw_qos->protocol.rtps_reliable_writer.heartbeat_period.sec = 0;
     dw_qos->protocol.rtps_reliable_writer.heartbeat_period.nanosec = 250000000;
 
@@ -338,13 +334,7 @@ Application_create_datareader(
     dr_qos->reader_resource_limits.max_remote_writers_per_instance = 1;
     dr_qos->history.depth = 1;
     dr_qos->durability.kind = DDS_VOLATILE_DURABILITY_QOS;
-
-    /* Reliability QoS */
-    #ifdef USE_RELIABLE_QOS
     dr_qos->reliability.kind = DDS_RELIABLE_RELIABILITY_QOS;
-    #else
-    dr_qos->reliability.kind = DDS_BEST_EFFORT_RELIABILITY_QOS;
-    #endif
 
     dr_listener.on_data_available = WindowCommandSubscriber_on_data_available;
     dr_listener.as_listener.listener_data = listener_data;

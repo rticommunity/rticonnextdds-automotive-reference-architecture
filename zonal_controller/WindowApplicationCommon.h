@@ -3,13 +3,6 @@
 
 #include "rti_me_c.h"
 
-/*e \dref_Example_Config_UseReliableQos
-* Define USE_RELIABLE_QOS to use reliable
-* reliability on the DataReader; otherwise, use
-* best-effort reliability by default.
-*/
-#define USE_RELIABLE_QOS
-
 extern void 
 Application_help(char *appname);
 
