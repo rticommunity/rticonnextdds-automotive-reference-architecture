@@ -17,7 +17,7 @@ The CockpitApp is the higher level class that ties the CockpitConnext and Cockpi
 classes together, and provides the main application logic.
 """
 
-
+import os
 import tkinter as tk
 from tkinter import ttk
 
@@ -70,7 +70,8 @@ class CockpitGUI:
         """Create the widgets for the GUI."""
         
         # Load the background image
-        self.background_image = tk.PhotoImage(file="/home/mzain/Dev/WindowExample/cockpit/infotainment.png")
+        img_path = os.path.join(os.path.dirname(__file__), "infotainment.png")
+        self.background_image = tk.PhotoImage(file=img_path)
         self.background_label = tk.Label(self.root, image=self.background_image)
         self.background_label.place(relwidth=1, relheight=1)
 
@@ -78,10 +79,7 @@ class CockpitGUI:
         self.root.geometry(f"{self.background_image.width()}x{self.background_image.height()}")
         self.root.resizable(False, False)
 
-        # Create a style for the frames
-        style_frame = ttk.Style()
-        style_frame.configure("My.TFrame", background="#171717")
-        frame = ttk.Frame(self.root, width=762, height=504, style="My.TFrame")
+        frame = ttk.Frame(self.root, width=762, height=504)
         frame.grid_propagate(False)  # Prevent the frame from resizing to fit its children
 
         # Add column weights to columns 0, 1, 2, and 3
@@ -90,35 +88,22 @@ class CockpitGUI:
         frame.grid_columnconfigure(1, weight=10)
         frame.grid_rowconfigure(2, weight=10)
 
-        # Create a style for the label
-        style_label = ttk.Style()
-        style_label.configure("My.TLabel", background="#171717", foreground="#FFFFFF", font=("Arial", 22, "bold"))
-
-        # Create a frame for the label
-        label_frame = ttk.Frame(frame, style="My.TFrame")
-        label_frame.grid(row=0, column=0, columnspan=4, sticky=tk.EW, padx=5, pady=5)
-
         # Create the label and pack it inside the label frame
-        label = ttk.Label(label_frame, text="Window Controls", style="My.TLabel", anchor=tk.CENTER)
-        label.pack(expand=True, fill=tk.BOTH)
+        label = ttk.Label(frame, text="Window Controls", font=("Arial", 22, "bold"), anchor=tk.CENTER)
+        label.grid(row=0, column=0, columnspan=4, sticky=tk.EW)
 
         # Create a style for the progress bars
         style_pbar = ttk.Style()
-        style_pbar.configure("Vertical.TProgressbar", thickness=300, troughcolor="#171717")  # Set the width here
-
-        # Create a style for the buttons
-        style_button = ttk.Style()
-        style_button.configure("My.TButton", background="#171717", foreground="#FFFFFF")
-        style_button.map("My.TButton", background=[("active", "#171717")])
+        style_pbar.configure("Vertical.TProgressbar", thickness=300)  # Set the width here
 
         def _create_pbar_and_buttons(window_id, parent=frame):
-            frame = ttk.Frame(parent, style="My.TFrame")
-            label = ttk.Label(frame, text=window_id, anchor=tk.CENTER, background="#171717", foreground="#FFFFFF", font=("Arial", 16, "bold"))
+            frame = ttk.Frame(parent)
+            label = ttk.Label(frame, text=window_id, anchor=tk.CENTER, font=("Arial", 16, "bold"))
             pbar = ttk.Progressbar(frame, orient="vertical", length=150, mode="determinate")
-            btns_frame = ttk.Frame(frame, style="My.TFrame")
-            btn_up = ttk.Button(btns_frame, text="^", command=lambda: self.window_close(window_id), width=2, style="My.TButton")
-            btn_spacer = ttk.Frame(btns_frame, style="My.TFrame")
-            btn_down = ttk.Button(btns_frame, text="v", command=lambda: self.window_open(window_id), width=2, style="My.TButton")
+            btns_frame = ttk.Frame(frame)
+            btn_up = ttk.Button(btns_frame, text="^", command=lambda: self.window_close(window_id), width=2)
+            btn_spacer = ttk.Frame(btns_frame)
+            btn_down = ttk.Button(btns_frame, text="v", command=lambda: self.window_open(window_id), width=2)
             pbar.bind("<Button-1>", lambda event: self._pbar_on_click(event, window_id))
             
             label.grid(row=0, column=0, columnspan=2, sticky=tk.EW)
@@ -138,9 +123,9 @@ class CockpitGUI:
             pbar_and_buttons_frame = _create_pbar_and_buttons(window_id, parent=frame)
             pbar_and_buttons_frame.grid(row=(i//2+1)*2, column=(i%2)*2, padx=5, pady=5, sticky=tk.NSEW)
         
-        hspacer = ttk.Frame(frame, style="My.TFrame")
+        hspacer = ttk.Frame(frame)
         hspacer.grid(row=2, column=1, padx=5, pady=5, sticky=tk.E+tk.W)
-        vspacer = ttk.Frame(frame, style="My.TFrame")
+        vspacer = ttk.Frame(frame)
         vspacer.grid(row=2, column=1, padx=5, pady=5, sticky=tk.N+tk.S)
         
         # Match the position of the frame to the position of the screen in the background image
