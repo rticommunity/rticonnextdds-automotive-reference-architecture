@@ -95,8 +95,7 @@ class CockpitGUI:
         """Create the widgets for the GUI."""
         
         # Load the background image
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        img_path = os.path.join(script_dir, "infotainment.png")
+        img_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "infotainment.png"))
         self.background_image = tk.PhotoImage(file=img_path)
         self.background_label = tk.Label(self.root, image=self.background_image)
         self.background_label.place(relwidth=1, relheight=1)

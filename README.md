@@ -6,7 +6,7 @@ The use-case implements the control of the windows, such as opening and closing 
 
 In this specific example, two zonal controllers and one cockpit applications are used.
 
-![System diagram](system.png)
+![System diagram](resources/system.png)
 
 The cockpit application implements a Graphical User Interface. (GUI)
 
@@ -64,7 +64,7 @@ There is no output expected, the terminals should just display a cursor.
 
 This command should display a GUI with four vertical bars representing the windows.
 
-![Cockpit application screenshot](screenshot.png)
+![Cockpit application screenshot](resources/screenshot.png)
 
 #### Exercising the system
 
