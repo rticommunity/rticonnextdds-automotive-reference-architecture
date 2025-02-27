@@ -64,7 +64,7 @@ There is no output expected, the terminals should just display a cursor.
 
 This command should display a GUI with four vertical bars representing the windows.
 
-<img src="screenshot.png" alt="GUI Screenshot" width="70%">
+![Cockpit application screenshot](screenshot.png)
 
 #### Exercising the system
 
