@@ -23,6 +23,24 @@ from tkinter import ttk
 
 
 
+class CustomVerticalProgressBar(tk.Canvas):
+    def __init__(self, parent, width=300, height=180, progress=0, **kwargs):
+        super().__init__(parent, width=width, height=height, **kwargs)
+        self.width = width
+        self.height = height
+        self.progress = progress
+        self.base_x = self.base_y = 2
+        self.rect = self.create_rectangle(self.base_x, self.base_y, width, height, fill="lightblue", outline="grey")
+        self.set_progress(self.progress)
+
+    def set_progress(self, value):
+        self.progress = value
+        # Adjust so outline is visible when fully filled
+        base_y = self.base_y if value==100 else self.height - (self.height * (value / 100))
+        self.coords(self.rect, self.base_x, base_y, self.width, self.height)
+
+
+
 class CockpitGUI:
     """Simple GUI for the Cockpit application, part of the window
     control example system."""
@@ -63,7 +81,7 @@ class CockpitGUI:
 
     def update_position(self, window_id, position):
         """Update the position of a window in the GUI."""
-        self.window_widgets[window_id]["pbar"]["value"] = position
+        self.window_widgets[window_id]["pbar"].set_progress(position)
 
 
     def _create_widgets(self):
@@ -93,13 +111,13 @@ class CockpitGUI:
         label.grid(row=0, column=0, columnspan=4, sticky=tk.EW)
 
         # Create a style for the progress bars
-        style_pbar = ttk.Style()
-        style_pbar.configure("Vertical.TProgressbar", thickness=300)  # Set the width here
+        #style_pbar = ttk.Style()
+        #style_pbar.configure("Vertical.TProgressbar", thickness=300)  # Set the width here
 
         def _create_pbar_and_buttons(window_id, parent=frame):
             frame = ttk.Frame(parent)
             label = ttk.Label(frame, text=window_id, anchor=tk.CENTER, font=("Arial", 16, "bold"))
-            pbar = ttk.Progressbar(frame, orient="vertical", length=150, mode="determinate")
+            pbar = CustomVerticalProgressBar(frame)
             btns_frame = ttk.Frame(frame)
             btn_up = ttk.Button(btns_frame, text="^", command=lambda: self.window_close(window_id), width=2)
             btn_spacer = ttk.Frame(btns_frame)
@@ -107,8 +125,8 @@ class CockpitGUI:
             pbar.bind("<Button-1>", lambda event: self._pbar_on_click(event, window_id))
             
             label.grid(row=0, column=0, columnspan=2, sticky=tk.EW)
-            pbar.grid(row=1, column=0, sticky=tk.NSEW, pady=5)
-            btns_frame.grid(row=1, column=1, sticky=tk.NSEW, padx=5, pady=5)
+            pbar.grid(row=1, column=0, sticky=tk.NSEW, padx=5)
+            btns_frame.grid(row=1, column=1, sticky=tk.NSEW)
             
             btn_up.pack()
             btn_spacer.pack(fill=tk.Y, expand=True)
@@ -139,7 +157,7 @@ class CockpitGUI:
         """Event handler to trigger a window command when clicking on the progress bar."""
 
         pbar = self.window_widgets[window_id]["pbar"]
-        pbar_height = pbar.winfo_height()
+        pbar_height = pbar.height
         click_position = event.y
         new_value = 100 - int((click_position / pbar_height) * 100)
         self.window_set(window_id, new_value)
