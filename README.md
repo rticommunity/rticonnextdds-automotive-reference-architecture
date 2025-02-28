@@ -37,7 +37,10 @@ This section covers the steps required to compile and execute the example in a L
 
 #### Cockpit application
 
-This is a Python application and as such requires no building or compiling.
+1. Open a terminal and `cd` to the WindowExample directory
+2. Generate the type support code using the Connext Professional-specific `rtiddsgen` utility:  
+  `user@machine:~/WindowExample$ ~/rti_connext_dds-7.3.0/bin/rtiddsgen -create typefiles -language python -d ./cockpit Window.idl`  
+  *Note: on Windows you may need to also include the option `-ppDisable` in the rtiddsgen command.*
 
 ### Running the example
 
