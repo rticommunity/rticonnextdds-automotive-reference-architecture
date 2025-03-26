@@ -1,0 +1,64 @@
+# (c) 2025 Copyright, Real-Time Innovations, Inc. All rights reserved.
+# No duplications, whole or partial, manual or electronic, may be made
+# without express written permission.  Any such copies, or revisions thereof,
+# must display this notice unaltered.
+# This code contains trade secrets of Real-Time Innovations, Inc.
+
+# Ubuntu 22.04 is supported by RTI Connext DDS 7.3.0
+# Use Docker's multi-stage build capability to create an image that
+# contains only Ubuntu and the fully-installed RTI Connext distribution
+#
+# this image uses the ubuntu22_pro7_3_0 located in repo.rti.com
+
+ARG BASE_IMAGE=ubuntu22_pro7_3_0
+
+# Where the docker image is located
+ARG DOCKER_REGISTRY=repo.rti.com:443/services-docker-dev-hq
+
+FROM $DOCKER_REGISTRY/$BASE_IMAGE AS builder
+USER root
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt install -y --no-install-recommends wget
+
+WORKDIR /app
+
+# Where the dependencies manager server is located
+ARG ARTIFACTS_SERVER=https://repo.rti.com:443/artifactory
+ARG REPO_PATH=connext/connext-releases/7.3.0.2/BUILD_7.3.0.2_FINAL_RTI_REL/installers
+ARG WANT_INSTALLER=rti_real_time_wan_transport-7.3.0.2-target-x64Linux4gcc7.3.0.rtipkg
+
+# RT Wan Transport
+RUN wget \
+    $ARTIFACTS_SERVER/$REPO_PATH/$WANT_INSTALLER
+RUN $NDDSHOME/bin/rtipkginstall \
+    -unattended $WANT_INSTALLER
+
+FROM ubuntu:22.04
+
+WORKDIR /app/code
+
+RUN apt update && apt install -y --no-install-recommends  \
+        build-essential \
+        cmake \
+        vim\
+        libreadline-dev zlib1g-dev flex bison libxml2-dev libxslt-dev libssl-dev
+
+ENV NDDSHOME=/rti/rti_connext_dds-7.3.0
+COPY --from=builder $NDDSHOME $NDDSHOME
+# Set up the DDS execution environment
+ENV PATH=$NDDSHOME/bin:$NDDSHOME/resource/app/bin/x64Linux4gcc7.3.0/:/app/build:$PATH
+ENV LD_LIBRARY_PATH=$NDDSHOME/lib/x64Linux4gcc7.3.0
+
+#--------------------------#
+#--- Build Documentation --#
+#--------------------------#
+# Doxygen
+# RUN cd doc && doxygen doxygen.conf
+# Sphinx
+# RUN cd doc && make html
+
+WORKDIR build
+
+COPY RSConfig.xml RSConfig.xml
+COPY Window.xml Window.xml
