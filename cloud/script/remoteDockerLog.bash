@@ -1,6 +1,6 @@
 #!/bin/bash
 
-terraform_dir="../../terraform-infrastructure"
+terraform_dir="../terraform-infrastructure"
 ssh_key="~/.ssh/id_rsa"
 container_name="pub"
 public_ip_name="public_ip_01"

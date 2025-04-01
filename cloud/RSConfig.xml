@@ -125,7 +125,7 @@
 		</documentation>
 		</annotation>
 
-		<domain_route name="DomainRoute" enabled="true">
+		<domain_route name="DomainRoute">
 			<participant name="domain0">
 				<domain_id>0</domain_id>
 				<participant_qos>

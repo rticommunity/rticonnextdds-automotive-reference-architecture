@@ -8,7 +8,8 @@
 # Use Docker's multi-stage build capability to create an image that
 # contains only Ubuntu and the fully-installed RTI Connext distribution
 #
-# this image uses the ubuntu22_pro7_3_0 located in repo.rti.com
+# this image uses the ubuntu22_pro7_3_0 located in repo.rti.com, so they are internal images from RTI
+# TODO: Change this script to use the versions that are public available in Docker Hub (rti)
 
 ARG BASE_IMAGE=ubuntu22_pro7_3_0
 

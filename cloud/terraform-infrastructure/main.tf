@@ -23,26 +23,37 @@ resource "aws_key_pair" "ssh-key-local" {
   public_key = file("~/.ssh/id_rsa.pub")
   tags = {
     Project = "wiw"
-    Owner = "ialejo"
+    Owner   = "ialejo"
   }
+}
+
+variable "dockerhub_username" {
+  description = "Docker Hub Username"
+  type        = string
+}
+
+variable "dockerhub_password" {
+  description = "Docker Hub Password"
+  type        = string
+  sensitive   = true
 }
 
 resource "aws_security_group" "app_sg" {
   name        = "app_security_group"
-  description = "Allow UDP 70-100 and SSH on 2222 inbound"
+  description = "Allow UDP 80-90 and SSH on 2222 inbound"
 
   ingress {
     from_port   = 80
     to_port     = 90
     protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]  # Change this to restrict access
+    cidr_blocks =  ["0.0.0.0/0"]  # Restrict to your IP
   }
 
   ingress {
     from_port   = 2222
     to_port     = 2222
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Change this to restrict access
+    cidr_blocks = ["0.0.0.0/0"]  # Restrict to your IP
   }
 
   egress {
@@ -53,11 +64,11 @@ resource "aws_security_group" "app_sg" {
   }
   tags = {
     Project = "wiw"
-    Owner = "ialejo"
+    Owner   = "ialejo"
   }
 }
 
-#Using this we avoid having to specify the exact ami for the region
+# Using this we avoid having to specify the exact AMI for the region
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -75,13 +86,10 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "app_instance1" {
-  ami             = data.aws_ami.ubuntu.id
-  instance_type = "t2.small"
-  root_block_device {
-    volume_size = 32  # Vol size in GB
-  }
-  security_groups = [aws_security_group.app_sg.name]
-  key_name      = "ssh-key-local"
+  ami                  = data.aws_ami.ubuntu.id
+  instance_type        = "t2.small"
+  key_name             = aws_key_pair.ssh-key-local.key_name
+  vpc_security_group_ids = [aws_security_group.app_sg.id]
 
   user_data = <<-EOF
               #!/bin/bash
@@ -91,12 +99,15 @@ resource "aws_instance" "app_instance1" {
               apt install -y docker.io
               systemctl start docker
               systemctl enable docker
-              echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+              echo ${var.dockerhub_password} | docker login -u ${var.dockerhub_username} --password-stdin
               EOF
 
   tags = {
-    Name = "AppInstance1"
+    Name    = "AppInstance1"
     Project = "wiw"
-    Owner = "ialejo"
+    Owner   = "ialejo"
   }
 }
+
+
