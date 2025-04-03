@@ -47,12 +47,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <termios.h>
+#ifdef RTI_WIN32
+    #include <windows.h>
+    #include <conio.h>
+    #define strcasecmp _stricmp
+    #define strncasecmp _strnicmp
+#else
+    #include <unistd.h>
+    #include <termios.h>
+    #include <sys/select.h>
+    #include <strings.h>
+#endif
 #include <fcntl.h>
-#include <sys/select.h>
 #include <ctype.h>
-#include <strings.h>
 
 #include "rti_me_c.h"
 #include "wh_sm/wh_sm_history.h"
@@ -367,6 +374,21 @@ Application_create_datareader(
 RTI_PRIVATE char *
 non_blocking_fgets(char *buffer, int size)
 {
+#ifdef _WIN32
+    // Windows implementation using _kbhit() and _getch()
+    if (_kbhit()) {
+        if (fgets(buffer, size, stdin) != NULL) {
+            // Remove trailing newline if present
+            int len = (int)strlen(buffer);
+            if (len > 0 && buffer[len - 1] == '\n') {
+                buffer[len - 1] = '\0';
+            }
+            return buffer;
+        }
+    }
+    return NULL; // No input available
+#else
+    // POSIX implementation
     int flags, available;
     fd_set readfds;
     struct timeval timeout;
@@ -375,39 +397,28 @@ non_blocking_fgets(char *buffer, int size)
     flags = fcntl(STDIN_FILENO, F_GETFL, 0);
     fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
 
-
     FD_ZERO(&readfds);
     FD_SET(STDIN_FILENO, &readfds);
 
-    // Set a timeout if you want to avoid indefinite blocking if no input arrives immediately.
-    //  If you want it to be truly non-blocking and return immediately even if no input is available,
-    //  set timeout.tv_sec and timeout.tv_usec to 0.
     timeout.tv_sec = 0;   // 0 seconds
     timeout.tv_usec = 0;  // 0 microseconds
 
-    available = select(1, &readfds, NULL, NULL, &timeout); // Check if input is available
+    available = select(1, &readfds, NULL, NULL, &timeout);
 
-    if (available > 0)
-    {
-        // Input is available
-        if (fgets(buffer, size, stdin) != NULL)
-        {
-            // Remove trailing newline if present (fgets keeps it)
+    if (available > 0) {
+        if (fgets(buffer, size, stdin) != NULL) {
             int len = strlen(buffer);
-            if (len > 0 && buffer[len - 1] == '\n')
-            {
+            if (len > 0 && buffer[len - 1] == '\n') {
                 buffer[len - 1] = '\0';
             }
-            
-            //Restore the original flags
             fcntl(STDIN_FILENO, F_SETFL, flags);
             return buffer;
         }
     }
-    
-    //Restore the original flags even if there was no input. Important!
+
     fcntl(STDIN_FILENO, F_SETFL, flags);
-    return NULL; // No input available within the timeout, or error.
+    return NULL;
+#endif
 }
 
 
