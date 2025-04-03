@@ -376,11 +376,14 @@ non_blocking_fgets(char *buffer, int size)
 {
 #ifdef _WIN32
     // Windows implementation using _kbhit() and _getch()
-    if (_kbhit()) {
-        if (fgets(buffer, size, stdin) != NULL) {
+    if (_kbhit())
+    {
+        if (fgets(buffer, size, stdin) != NULL)
+        {
             // Remove trailing newline if present
             int len = (int)strlen(buffer);
-            if (len > 0 && buffer[len - 1] == '\n') {
+            if (len > 0 && buffer[len - 1] == '\n')
+            {
                 buffer[len - 1] = '\0';
             }
             return buffer;
@@ -405,10 +408,13 @@ non_blocking_fgets(char *buffer, int size)
 
     available = select(1, &readfds, NULL, NULL, &timeout);
 
-    if (available > 0) {
-        if (fgets(buffer, size, stdin) != NULL) {
+    if (available > 0)
+    {
+        if (fgets(buffer, size, stdin) != NULL)
+        {
             int len = strlen(buffer);
-            if (len > 0 && buffer[len - 1] == '\n') {
+            if (len > 0 && buffer[len - 1] == '\n')
+            {
                 buffer[len - 1] = '\0';
             }
             fcntl(STDIN_FILENO, F_SETFL, flags);
