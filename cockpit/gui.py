@@ -88,7 +88,8 @@ class CockpitGUI:
 
     def update_position(self, window_id, position):
         """Update the position of a window in the GUI."""
-        self.window_widgets[window_id]["vbar"].set_progress(position)
+        if window_id in self.window_widgets:
+            self.window_widgets[window_id]["vbar"].set_progress(position)
 
 
     def _create_widgets(self):
