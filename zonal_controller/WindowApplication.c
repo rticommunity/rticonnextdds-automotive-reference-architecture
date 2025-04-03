@@ -770,7 +770,7 @@ main(int argc, char **argv)
     DDS_Long domain_id = 0;
     char *peer = NULL;
     char *udp_intf = NULL;
-    char * window_ids[WINDOW_ID_STR_LEN] = {"AB", "CD"};
+    char * window_ids[WINDOW_ID_STR_LEN] = {"FL", "FR"};
 
     for (i = 1; i < argc; ++i)
     {
