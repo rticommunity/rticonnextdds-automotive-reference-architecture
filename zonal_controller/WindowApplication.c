@@ -642,7 +642,7 @@ main_w_args(
     char *peer,
     char **window_ids)
 {
-    DDS_DomainParticipant *participant;
+    DDS_DomainParticipant *participant = NULL;
     DDS_Publisher *publisher;
     DDS_Subscriber *subscriber;
     DDS_Topic *topic_window_command;
