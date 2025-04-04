@@ -91,8 +91,10 @@ Application_register_udp_transport(RT_Registry_T *registry, const char *udp_intf
     /* Unregister default UDP transport */
     if (!RT_Registry_unregister(registry, NETIO_DEFAULT_UDP_NAME, NULL, NULL))
     {
+#ifdef USE_CONNEXT_MICRO2
         printf("failed to unregister udp\n");
         goto error;
+#endif
     }
 
     udp_property = (struct UDP_InterfaceFactoryProperty *)
