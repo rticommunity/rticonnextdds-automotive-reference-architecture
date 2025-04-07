@@ -30,8 +30,8 @@ fi
 
 public_ip_01=`terraform -chdir=${terraform_dir} output -raw public_ip_01`
 echo "Running RS on ${public_ip_01}:${public_port_1}:${private_port_1} and ${public_ip_01}:${public_port_2}:${private_port_2}"
-run_rs="sudo docker pull ${docker_image}  && sudo docker run  --name rs --rm -it -d -p ${public_port_1}:${private_port_1} \
-                      -p ${public_port_2}:${private_port_2} -e eip01_eip=${public_ip_01} \
+run_rs="sudo docker pull ${docker_image}  && sudo docker run  --name rs --rm -it -d -p ${public_port_1}:${private_port_1}/udp \
+                      -p ${public_port_2}:${private_port_2}/udp -e eip01_eip=${public_ip_01} \
                       ${docker_image} rtiroutingservice \
                       -cfgFile RSConfig.xml -cfgName example_WanT -verbosity ALL"
 # runing routing service container on the remote machine
