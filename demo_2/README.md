@@ -93,6 +93,12 @@ Zonal Controller communicates with the Cockpit thanks to the External Routing Se
 So, to make this possible, we will use a local routing service configured to map Domain 0 and 1, taking into 
 account that the Transport used for Domain 1 is the RT Wan Transport.
 
+Attention! Be sure you export the eip01_eip variable with the public ip of the EC2 instance.
+
+```bash 
+export eip01_eip=13.40.87.33
+```
+
 For running Routing Service, we will use the following command:
 ```bash
 $NDDSHOME/bin/rtiroutingservice -cfgFile RSConfig.xml -cfgName example_WanZonalInternal
@@ -106,6 +112,12 @@ Cockpit communicates with the Zonal Controllers thanks to the External Routing S
 
 So, to make this possible, we will use a local routing service configured to map Domain 1 and 0, taking into
 account that the Transport used for Domain 0 is the RT Wan Transport.
+
+Attention! Be sure you export the eip01_eip variable with the public ip of the EC2 instance.
+
+```bash 
+export eip01_eip=13.40.87.33
+```
 
 For running Routing Service, we will use the following command:
 ```bash
