@@ -30,9 +30,53 @@ Remember to make the image private if you pull it from Docker Hub or other Docke
 
 To deploy the AWS infrastructure, you need to have an AWS account and the AWS CLI installed.
 
-The terraform script will create an EC2 instance with the necessary ports open to run the Routing Service.
+The Terraform script will create an EC2 instance with the necessary ports open to run the Routing Service.
+
 It also logs in to your Docker Hub account to where the Docker image is stored after being created in the previous step. 
 If you are using another Docker registry, you need to change the terraform script.
+
+### Prerequisites
+
+You have to create an RSA key pair in your local machine to log in to the EC2 instance.
+
+You can do this by running the following command:
+```bash
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa
+```
+This will create a public and private key in the ~/.ssh directory. The Terraform script will use the public key to 
+create a new key pair in AWS as you can see in the terraform script:
+
+``` Terraform
+resource "aws_key_pair" "ssh-key-local" {
+  key_name   = "ssh-key-local"
+  public_key = file("~/.ssh/id_rsa.pub")
+  tags = {
+    Project = "wiw"
+    Owner   = "ialejo"
+  }
+}
+```
+
+after deploying the infrastructure, you can log in to the EC2 instance using the following command:
+```bash
+ssh -i "~/.ssh/id_rsa" -p 2222 ubuntu@<public_ip>
+```
+Where *public_ip* is the public ip of the EC2 instance. You can check it by running the following command:
+```bash 
+terraform output
+```
+
+### Running the Terraform script
+
+You need to have Terraform installed on your machine. You can download it from the [Terraform website](https://www.terraform.io/downloads.html).
+You also need to have the AWS CLI installed and configured with your AWS credentials. You can do this by running the following command:
+```bash
+export AWS_ACCESS_KEY_ID="XXXX"
+export AWS_SECRET_ACCESS_KEY="XXXXX"
+export AWS_SESSION_TOKEN="XXXXXXXXXXXXXXXXXXXXXXXXX"
+```
+
+You can check those AWS environment variables by logging into AWS and comping them by clicking on the "Accounts" tab, "Access keys" link.
 
 After logging in to your AWS account on a console, you can deploy the infrastructure by running the following commands:
 
@@ -42,8 +86,7 @@ terraform init
 terraform apply -var="dockerhub_username=your_dockerhub_username" -var="dockerhub_password=your_dockerhub_password"
 ```
 
-This will create the following resources:
-An EC2 Instance
+This will create a single EC2 Instance.
 
 You can check the ip of the EC2 instance by running the following command:
 ```bash
@@ -129,5 +172,3 @@ To run the Cockpit, you just have to run the following command:
 cd cockpit
 python3 application.py --domain_id=1
 ```
-## Configuration
-TBD
