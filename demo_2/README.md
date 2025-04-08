@@ -1,10 +1,10 @@
 
 # Cloud Deployment
 
-We will deploy a Routing Service on an AWS EC2 instance and run the Zonal Controller and 
+A Routing Service is deployed on an AWS EC2 instance and run the Zonal Controller and 
 the Cockpit on your local machine, but the Zonal Controller and the cockpit can be deployed anywhere.
 
-The Routing Service will be configured to use the Real Time Wan Transport to make communication between the 
+The Routing Service is configured to use the Real Time Wan Transport to make communication between the 
 Zonal Controllers and the Cockpit possible.
 
 ## Creating the Docker image
