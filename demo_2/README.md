@@ -30,7 +30,7 @@ Remember to make the image private if you pull it from Docker Hub or other Docke
 
 To deploy the AWS infrastructure, you need to have an AWS account and the AWS CLI installed.
 
-The Terraform script will create an EC2 instance with the necessary ports open to run the Routing Service.
+The Terraform script creates an EC2 instance with the necessary ports open to run the Routing Service.
 
 It also logs in to your Docker Hub account to where the Docker image is stored after being created in the previous step. 
 If you are using another Docker registry, you need to change the terraform script.
@@ -43,7 +43,7 @@ You can do this by running the following command:
 ```bash
 ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa
 ```
-This will create a public and private key in the ~/.ssh directory. The Terraform script will use the public key to 
+This command creates a public and private key in the ~/.ssh directory. The Terraform script uses the public key to 
 create a new key pair in AWS as you can see in the terraform script:
 
 ``` Terraform
@@ -86,7 +86,7 @@ terraform init
 terraform apply -var="dockerhub_username=your_dockerhub_username" -var="dockerhub_password=your_dockerhub_password"
 ```
 
-This will create a single EC2 Instance.
+This creates a single EC2 Instance.
 
 You can check the ip of the EC2 instance by running the following command:
 ```bash
@@ -122,9 +122,9 @@ rtiroutingservice -cfgFile RSConfig.xml -cfgName example_WanT -verbosity 5
 ```
 being *public_ip_01* the public ip of the EC2 instance that you can check as shown in the previous section.
 
-This will start the Routing Service with the configuration file RSConfig.xml and the configuration name example_WanT. 
+This starts the Routing Service with the configuration file RSConfig.xml and the configuration name example_WanT. 
 
-The Routing Service will be listening on port 8080 for the UDP protocol and port 8090 for the UDP protocol.
+The Routing Service listens to port 8080 for the UDP protocol and port 8090 for the UDP protocol.
 Docker maps ports 80 and 90 of the host to ports 8080 and 8090 of the container, respectively.
 
 Routing Service uses Real Time Wan Transport to communicate with the Zonal Controllers and the Cockpit.
@@ -133,7 +133,7 @@ Routing Service uses Real Time Wan Transport to communicate with the Zonal Contr
 
 Zonal Controller communicates with the Cockpit thanks to the External Routing Service configured on the EC2 Instance.
 
-So, to make this possible, we will use a local routing service configured to map Domain 0 and 1, taking into 
+So, to make this possible, we use a local routing service configured to map Domain 0 and 1, taking into 
 account that the Transport used for Domain 1 is the RT Wan Transport.
 
 Attention! Be sure you export the eip01_eip variable with the public ip of the EC2 instance.
@@ -142,7 +142,7 @@ Attention! Be sure you export the eip01_eip variable with the public ip of the E
 export eip01_eip=13.40.87.33
 ```
 
-For running Routing Service, we will use the following command:
+For running Routing Service, we use the following command:
 ```bash
 $NDDSHOME/bin/rtiroutingservice -cfgFile RSConfig.xml -cfgName example_WanZonalInternal
 ```
@@ -153,7 +153,7 @@ Then you just have to run the Zonal Controller as is shown in the main Readme fi
 
 Cockpit communicates with the Zonal Controllers thanks to the External Routing Service configured on the EC2 Instance.
 
-So, to make this possible, we will use a local routing service configured to map Domain 1 and 0, taking into
+So, to make this possible, we use a local routing service configured to map Domain 1 and 0, taking into
 account that the Transport used for Domain 0 is the RT Wan Transport.
 
 Attention! Be sure you export the eip01_eip variable with the public ip of the EC2 instance.
@@ -162,7 +162,7 @@ Attention! Be sure you export the eip01_eip variable with the public ip of the E
 export eip01_eip=13.40.87.33
 ```
 
-For running Routing Service, we will use the following command:
+For running Routing Service, we use the following command:
 ```bash
 $NDDSHOME/bin/rtiroutingservice -cfgFile RSConfig.xml -cfgName example_WanCockpitInternal
 ```
