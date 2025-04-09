@@ -1,0 +1,476 @@
+<?xml version="1.0"?>
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://community.rti.com/schema/7.3.0/rti_routing_service.xsd">
+
+	<!-- **********************************************************************
+		RTI Routing service example **********************************************************************
+		This example reads HelloWorld from domain 0 and publish them on domain 1.
+		********************************************************************** -->
+
+	<types>
+		<include file="Window.xml"/>
+	</types>
+
+	<!-- This is the routing service configuration for this example -->
+	<routing_service name="example">
+
+		<annotation>
+			<documentation>
+				Reads HelloWorld topic on domain 0 and writes them on domain 1
+			</documentation>
+		</annotation>
+
+		<domain_route name="DomainRoute" enabled="true">
+			<participant name="domain0">
+				<domain_id>0</domain_id>
+				<participant_qos>
+					<transport_builtin>
+						<mask>UDPv4</mask>
+					</transport_builtin>
+				</participant_qos>
+				<register_type name="WindowCommand" type_ref="WindowCommand"/>
+				<register_type name="WindowUpdate" type_ref="WindowUpdate"/>
+			</participant>
+			<participant name="domain1">
+				<domain_id>1</domain_id>
+				<participant_qos>
+					<transport_builtin>
+						<mask>UDPv4</mask>
+					</transport_builtin>
+				</participant_qos>
+				<register_type name="WindowCommand" type_ref="WindowCommand"/>
+				<register_type name="WindowUpdate" type_ref="WindowUpdate"/>
+			</participant>
+
+			<!-- A session with default configuration that contains a single topic
+			route -->
+			<session name="SessionCommand">
+
+				<topic_route name="Domain0to1">
+					<publish_with_original_info>true</publish_with_original_info>
+					<publish_with_original_timestamp>true</publish_with_original_timestamp>
+					<input participant="domain0">
+						<registered_type_name>WindowUpdate</registered_type_name>
+						<topic_name>WindowUpdate</topic_name>
+
+						<datareader_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+							</durability>
+						</datareader_qos>
+					</input>
+					<output participant="domain1">
+						<!-- Writing the same type -->
+						<registered_type_name>WindowUpdate</registered_type_name>
+						<!-- and same topic -->
+						<topic_name>WindowUpdate</topic_name>
+						<datawriter_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+							</durability>
+						</datawriter_qos>
+					</output>
+
+				</topic_route>
+				<topic_route name="Domain1to0">
+					<publish_with_original_info>true</publish_with_original_info>
+					<publish_with_original_timestamp>true</publish_with_original_timestamp>
+					<!-- Reading data from participant_1 -->
+					<input participant="domain1">
+						<registered_type_name>WindowCommand</registered_type_name>
+						<topic_name>WindowCommand</topic_name>
+
+						<datareader_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>VOLATILE_DURABILITY_QOS</kind>
+							</durability>
+						</datareader_qos>
+					</input>
+					<output participant="domain0">
+						<!-- Writing the same type -->
+						<registered_type_name>WindowCommand</registered_type_name>
+						<!-- and same topic -->
+						<topic_name>WindowCommand</topic_name>
+						<datawriter_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>VOLATILE_DURABILITY_QOS</kind>
+							</durability>
+						</datawriter_qos>
+					</output>
+
+				</topic_route>
+
+			</session>
+		</domain_route>
+	</routing_service>
+
+	<!-- This is the routing service configuration for this example -->
+	<routing_service name="example_WanT">
+
+		<annotation>
+			<documentation>
+			Reads HelloWorld topic on domain 0 and writes them on domain 1
+		</documentation>
+		</annotation>
+
+		<domain_route name="DomainRoute">
+			<participant name="domain0">
+				<domain_id>0</domain_id>
+				<participant_qos>
+					<transport_builtin>
+						<mask>UDPv4_WAN</mask>
+						<udpv4_wan>
+							<public_address>
+								$(eip01_eip)
+							</public_address>
+							<comm_ports>
+								<default>
+									<host>8090</host>
+									<public>90</public>
+								</default>
+							</comm_ports>
+						</udpv4_wan>
+					</transport_builtin>
+				</participant_qos>
+				<register_type name="WindowCommand" type_ref="WindowCommand"/>
+				<register_type name="WindowUpdate" type_ref="WindowUpdate"/>
+			</participant>
+			<participant name="domain1">
+				<domain_id>1</domain_id>
+				<participant_qos>
+					<transport_builtin>
+						<mask>UDPv4_WAN</mask>
+						<udpv4_wan>
+							<public_address>
+							$(eip01_eip)
+						</public_address>
+							<comm_ports>
+								<default>
+									<host>8080</host>
+									<public>80</public>
+								</default>
+							</comm_ports>
+						</udpv4_wan>
+					</transport_builtin>
+				</participant_qos>
+				<register_type name="WindowCommand" type_ref="WindowCommand"/>
+				<register_type name="WindowUpdate" type_ref="WindowUpdate"/>
+			</participant>
+
+			<!-- A session with default configuration that contains a single topic
+			route -->
+			<session name="SessionCommand">
+
+				<topic_route name="Domain1to0">
+					<publish_with_original_info>true</publish_with_original_info>
+					<publish_with_original_timestamp>true</publish_with_original_timestamp>
+					<input participant="domain1">
+						<registered_type_name>WindowUpdate</registered_type_name>
+						<topic_name>WindowUpdate</topic_name>
+
+						<datareader_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+							</durability>
+						</datareader_qos>
+					</input>
+					<output participant="domain0">
+						<!-- Writing the same type -->
+						<registered_type_name>WindowUpdate</registered_type_name>
+						<!-- and the same topic -->
+						<topic_name>WindowUpdate</topic_name>
+						<datawriter_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+							</durability>
+						</datawriter_qos>
+					</output>
+
+				</topic_route>
+				<topic_route name="Domain0to1">
+					<publish_with_original_info>true</publish_with_original_info>
+					<publish_with_original_timestamp>true</publish_with_original_timestamp>
+					<!-- Reading data from participant_1 -->
+					<input participant="domain0">
+						<registered_type_name>WindowCommand</registered_type_name>
+						<topic_name>WindowCommand</topic_name>
+
+						<datareader_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>VOLATILE_DURABILITY_QOS</kind>
+							</durability>
+						</datareader_qos>
+					</input>
+					<output participant="domain1">
+						<!-- Writing the same type -->
+						<registered_type_name>WindowCommand</registered_type_name>
+						<!-- an the same topic -->
+						<topic_name>WindowCommand</topic_name>
+						<datawriter_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>VOLATILE_DURABILITY_QOS</kind>
+							</durability>
+						</datawriter_qos>
+					</output>
+
+				</topic_route>
+
+			</session>
+		</domain_route>
+	</routing_service>
+
+	<!-- This is the routing service configuration for this example -->
+	<routing_service name="example_WanZonalInternal">
+
+		<annotation>
+			<documentation>
+				Wan Internal for Zonal Controller
+			</documentation>
+		</annotation>
+
+		<domain_route name="DomainRoute">
+			<participant name="domain0">
+				<domain_id>0</domain_id>
+				<participant_qos>
+					<transport_builtin>
+						<mask>UDPv4</mask>
+					</transport_builtin>
+				</participant_qos>
+				<register_type name="WindowCommand" type_ref="WindowCommand"/>
+				<register_type name="WindowUpdate" type_ref="WindowUpdate"/>
+			</participant>
+			<participant name="domain1">
+				<domain_id>1</domain_id>
+				<participant_qos>
+					<transport_builtin>
+						<mask>UDPv4_WAN</mask>
+					</transport_builtin>
+					<discovery>
+						<!-- Accept unknown peers has to be set to true when private participants are
+                        configured.
+                            The peer that replies may have a different locator than the ones set here in initial_peers -->
+						<accept_unknown_peers>true</accept_unknown_peers>
+						<initial_peers>
+							<element>
+								rtps@udpv4_wan://$(eip01_eip):80
+							</element>
+						</initial_peers>
+					</discovery>
+				</participant_qos>
+				<register_type name="WindowCommand" type_ref="WindowCommand"/>
+				<register_type name="WindowUpdate" type_ref="WindowUpdate"/>
+			</participant>
+
+			<!-- A session with default configuration that contains a single topic
+			route -->
+			<session name="SessionCommand">
+
+				<topic_route name="Domain0to1">
+					<publish_with_original_info>true</publish_with_original_info>
+					<publish_with_original_timestamp>true</publish_with_original_timestamp>
+					<input participant="domain0">
+						<registered_type_name>WindowUpdate</registered_type_name>
+						<topic_name>WindowUpdate</topic_name>
+
+						<datareader_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+							</durability>
+						</datareader_qos>
+					</input>
+					<output participant="domain1">
+						<!-- Writing the same type -->
+						<registered_type_name>WindowUpdate</registered_type_name>
+						<!-- and same topic -->
+						<topic_name>WindowUpdate</topic_name>
+						<datawriter_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+							</durability>
+						</datawriter_qos>
+					</output>
+
+				</topic_route>
+				<topic_route name="Domain1to0">
+					<publish_with_original_info>true</publish_with_original_info>
+					<publish_with_original_timestamp>true</publish_with_original_timestamp>
+					<!-- Reading data from participant_1 -->
+					<input participant="domain1">
+						<registered_type_name>WindowCommand</registered_type_name>
+						<topic_name>WindowCommand</topic_name>
+
+						<datareader_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>VOLATILE_DURABILITY_QOS</kind>
+							</durability>
+						</datareader_qos>
+					</input>
+					<output participant="domain0">
+						<!-- Writing the same type -->
+						<registered_type_name>WindowCommand</registered_type_name>
+						<!-- and same topic -->
+						<topic_name>WindowCommand</topic_name>
+						<datawriter_qos>
+							<reliability>
+								<kind>RELIABLE_RELIABILITY_QOS</kind>
+							</reliability>
+							<durability>
+								<kind>VOLATILE_DURABILITY_QOS</kind>
+							</durability>
+						</datawriter_qos>
+					</output>
+
+				</topic_route>
+
+			</session>
+		</domain_route>
+	</routing_service>
+	<routing_service name="example_WanCockpitInternal">
+
+		<annotation>
+			<documentation>
+				Wan Internal Cockpit
+			</documentation>
+		</annotation>
+		<domain_route name="DomainRoute">
+		<participant name="domain1">
+			<domain_id>1</domain_id>
+			<participant_qos>
+				<transport_builtin>
+					<mask>UDPv4</mask>
+				</transport_builtin>
+			</participant_qos>
+			<register_type name="WindowCommand" type_ref="WindowCommand"/>
+			<register_type name="WindowUpdate" type_ref="WindowUpdate"/>
+		</participant>
+		<participant name="domain0">
+			<domain_id>0</domain_id>
+			<participant_qos>
+				<transport_builtin>
+					<mask>UDPv4_WAN</mask>
+				</transport_builtin>
+
+				<discovery>
+					<!-- Accept unknown peers has to be set to true when private participants are
+                    configured.
+                        The peer that replies may have a different locator than the ones set here in initial_peers -->
+					<accept_unknown_peers>true</accept_unknown_peers>
+					<initial_peers>
+						<element>
+							rtps@udpv4_wan://$(eip01_eip):90
+						</element>
+					</initial_peers>
+				</discovery>
+			</participant_qos>
+			<register_type name="WindowCommand" type_ref="WindowCommand"/>
+			<register_type name="WindowUpdate" type_ref="WindowUpdate"/>
+		</participant>
+
+		<!-- A session with default configuration that contains a single topic
+        route -->
+		<session name="SessionCommand">
+
+		<topic_route name="Domain0to1">
+			<publish_with_original_info>true</publish_with_original_info>
+			<publish_with_original_timestamp>true</publish_with_original_timestamp>
+			<input participant="domain0">
+				<registered_type_name>WindowUpdate</registered_type_name>
+				<topic_name>WindowUpdate</topic_name>
+
+				<datareader_qos>
+					<reliability>
+						<kind>RELIABLE_RELIABILITY_QOS</kind>
+					</reliability>
+					<durability>
+						<kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+					</durability>
+				</datareader_qos>
+			</input>
+			<output participant="domain1">
+				<!-- Writing the same type -->
+				<registered_type_name>WindowUpdate</registered_type_name>
+				<!-- and same topic -->
+				<topic_name>WindowUpdate</topic_name>
+				<datawriter_qos>
+					<reliability>
+						<kind>RELIABLE_RELIABILITY_QOS</kind>
+					</reliability>
+					<durability>
+						<kind>TRANSIENT_LOCAL_DURABILITY_QOS</kind>
+					</durability>
+				</datawriter_qos>
+			</output>
+
+		</topic_route>
+		<topic_route name="Domain1to0">
+			<publish_with_original_info>true</publish_with_original_info>
+			<publish_with_original_timestamp>true</publish_with_original_timestamp>
+			<!-- Reading data from participant_1 -->
+			<input participant="domain1">
+				<registered_type_name>WindowCommand</registered_type_name>
+				<topic_name>WindowCommand</topic_name>
+
+				<datareader_qos>
+					<reliability>
+						<kind>RELIABLE_RELIABILITY_QOS</kind>
+					</reliability>
+					<durability>
+						<kind>VOLATILE_DURABILITY_QOS</kind>
+					</durability>
+				</datareader_qos>
+			</input>
+			<output participant="domain0">
+				<!-- Writing the same type -->
+				<registered_type_name>WindowCommand</registered_type_name>
+				<!-- and same topic -->
+				<topic_name>WindowCommand</topic_name>
+				<datawriter_qos>
+					<reliability>
+						<kind>RELIABLE_RELIABILITY_QOS</kind>
+					</reliability>
+					<durability>
+						<kind>VOLATILE_DURABILITY_QOS</kind>
+					</durability>
+				</datawriter_qos>
+			</output>
+
+		</topic_route>
+		</session>
+		</domain_route>
+
+	</routing_service>
+
+</dds>

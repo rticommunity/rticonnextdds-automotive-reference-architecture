@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://community.rti.com/schema/7.3.0/rti_dds_profiles.xsd">
+<types>
+<const name="TOPIC_WINDOW_COMMAND" type="string" value="WindowCommand"/>
+<const name="TOPIC_WINDOW_UPDATE" type="string" value="WindowUpdate"/>
+<const name="ID_STR_LEN" type="uint8" value="2"/>
+<typedef name="window_id_t" stringMaxLength="ID_STR_LEN" type="string"/>
+<struct name= "WindowCommand">
+  <member name="id" type="nonBasic"  nonBasicTypeName= "window_id_t" key="true"/>
+  <member name="position" type="uint16"/>
+</struct>
+<struct name= "WindowUpdate">
+  <member name="id" type="nonBasic"  nonBasicTypeName= "window_id_t" key="true"/>
+  <member name="position" type="uint16"/>
+</struct>
+</types>
+</dds>

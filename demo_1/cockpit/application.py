@@ -17,18 +17,17 @@ is closed.
 
 import connext
 import gui
-
-
+import argparse
 
 class CockpitApp:
     """Main application class for the Cockpit application."""
 
-    def __init__(self):
+    def __init__(self, domain_id=0):
         """Set up the CockpitConnext and CockpitGUI instances, 
         connecting their APIs and then start the application."""
 
         self.gui_app = gui.CockpitGUI()
-        self.connext_app = connext.CockpitConnext()
+        self.connext_app = connext.CockpitConnext(domain_id=domain_id)
 
         self.gui_app.window_open = self.connext_app.send_open
         self.gui_app.window_close = self.connext_app.send_close
@@ -44,4 +43,8 @@ class CockpitApp:
 
 if __name__ == "__main__":
     # Start the Cockpit application when executing this module
-    app = CockpitApp()
+    parser = argparse.ArgumentParser(description="Start the Cockpit application.")
+    parser.add_argument("--domain_id", type=int, default=0, help="Domain ID for the Cockpit application")
+    args = parser.parse_args()
+
+    app = CockpitApp(domain_id=args.domain_id)
