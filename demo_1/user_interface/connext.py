@@ -1,21 +1,16 @@
-"""Connext DDS implementation of the Cockpit interface for the 
-window control example system.
+"""Connext DDS implementation of the interface for the window control example system.
 
-This module provides the CockpitConnext class, which is
-a wrapper around the Connext DDS API to provide a simple
-interface for the Cockpit application.
+This module provides the ConnextApp class, which is a wrapper around the Connext DDS API
+to provide a simple interface for GUI applications.
 
-The CockpitConnext class is responsible for setting up the DDS
-entities, sending commands to the window control system, and
-receiving updates from the window control system.
+The ConnextApp class is responsible for setting up the DDS entities, sending commands
+to the window control system, and receiving updates from the window control system.
 
-The CockpitConnext class is designed to be used in conjunction 
-with the CockpitGUI class, which provides a graphical user
-interface for the Cockpit application.
+The ConnextApp class is designed to be used in conjunction with GUI classes such as
+CockpitGUI or MobileAppGUI, which provide graphical user interfaces for the application.
 
-The CockpitApp is the higher level class that ties the CockpitConnext
-and CockpitGUI classes together, and provides the main application
-logic.
+The main application logic can be implemented by extending or integrating the ConnextApp
+class with the desired GUI framework.
 """
 
 import rti.connextdds as dds
@@ -25,9 +20,9 @@ import Window
 
 
 
-class CockpitConnext:
+class ConnextApp:
     """Wrapper around the Connext DDS API to provide a simple
-    interface for the Cockpit application"""
+    interface for the main GUI application."""
     
     def __init__(self, domain_id = 0):
         """Set up the DDS instances and start the data monitoring thread."""
@@ -100,6 +95,7 @@ class CockpitConnext:
     @property
     def _datareader_qos_transient_local(self):
         """Return a DataReaderQoS object with Transient Local Durability settings."""
+
         datareader_qos = dds.DataReaderQos()
         datareader_qos.durability.kind = dds.DurabilityKind.TRANSIENT_LOCAL
         datareader_qos.reliability.kind = dds.ReliabilityKind.RELIABLE

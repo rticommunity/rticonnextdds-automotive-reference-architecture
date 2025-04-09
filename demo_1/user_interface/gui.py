@@ -1,20 +1,21 @@
-"""GUI for the Cockpit application.
+"""GUI for the Cockpit and Mobile App applications.
 
-The CockpitGUI class provides a simple GUI for the Cockpit application,
-which allows the user to control the position of four windows in the 
-window controller example system.
+This module provides two GUI classes, CockpitGUI and MobileAppGUI, both of which
+inherit from the BaseGUI class. These GUIs allow the user to control the position
+of four windows in the window controller example system.
 
-The GUI consists of four vertical progress bars, each representing a window,
-and two buttons for each window to open and close it.
+The CockpitGUI class provides a GUI tailored for the Cockpit application, featuring
+a larger interface with a background image representing an infotainment system.
 
-Additionally, the user can click on a progress bar to set the position of the
-corresponding window.
+The MobileAppGUI class provides a GUI tailored for a simulated mobile application,
+featuring a more compact interface with a background image representing a mobile app.
 
-The CockpitGUI class is designed to be used in conjunction with the CockpitConnext
-class, which provides the DDS communication layer for the Cockpit application.
+Both GUIs consist of vertical progress bars, each representing a window, and two
+buttons for each window to open and close it. Additionally, the user can click on
+a progress bar to set the position of the corresponding window.
 
-The CockpitApp is the higher level class that ties the CockpitConnext and CockpitGUI
-classes together, and provides the main application logic.
+The BaseGUI class serves as the foundation for these GUIs, providing common functionality
+and a customizable framework for creating similar applications.
 """
 
 import os
@@ -47,10 +48,33 @@ class CustomVerticalBar(tk.Canvas):
 
 
 
-class CockpitGUI:
-    """Simple GUI for the Cockpit application, part of the window control example system."""
+class BaseGUI:
+    """Base class for the GUI, providing common functionality."""
 
-    WINDOW_TITLE = "Cockpit"
+    # Class variables for the GUI configuration.
+    # These are overridden in the subclasses to set the specific values for each GUI
+    # (e.g., CockpitGUI and MobileAppGUI)
+
+    # The following variables are set in the subclasses:
+    #   - WINDOW_TITLE: Title of the GUI window.
+    #   - BACKGROUND_IMAGE_PATH: Path to the background image file.
+    #   - MAIN_FRAME_WIDTH: Width of the main frame that contains all widgets.
+    #   - MAIN_FRAME_HEIGHT: Height of the main frame that contains all widgets.
+    #   - MAIN_FRAME_X: X position (top-left) of the main frame.
+    #   - MAIN_FRAME_Y: Y position (top-left) of the main frame.
+    #   - VBAR_WIDTH: Width to use for each CustomVerticalBar object.
+    #   - VBAR_HEIGHT: Height to use for each CustomVerticalBar object.
+    #   - SHOW_TITLE_LABEL: Boolean to show/hide the label widget showing the title on the frame.
+
+    WINDOW_TITLE = ""
+    BACKGROUND_IMAGE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", ".png"))
+    MAIN_FRAME_WIDTH = 0
+    MAIN_FRAME_HEIGHT = 0
+    MAIN_FRAME_X = 0
+    MAIN_FRAME_Y = 0
+    VBAR_WIDTH = 0
+    VBAR_HEIGHT = 0
+    SHOW_TITLE_LABEL = True
 
     def __init__(self, window_ids=["FL", "FR", "RL", "RR"]):
         """Create the GUI window and widgets."""
@@ -96,8 +120,7 @@ class CockpitGUI:
         """Create the widgets for the GUI."""
         
         # Load the background image
-        img_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "infotainment.png"))
-        self.background_image = tk.PhotoImage(file=img_path)
+        self.background_image = tk.PhotoImage(file=self.BACKGROUND_IMAGE_PATH)
         self.background_label = tk.Label(self.root, image=self.background_image)
         self.background_label.place(relwidth=1, relheight=1)
 
@@ -106,9 +129,9 @@ class CockpitGUI:
         self.root.resizable(False, False)
 
         # Create a frame to hold all widgets, occupying the screen in the background picture
-        frame = ttk.Frame(self.root, width=762, height=504)
+        frame = ttk.Frame(self.root, width=self.MAIN_FRAME_WIDTH, height=self.MAIN_FRAME_HEIGHT)
         # Match the position of the frame to the position of the screen in the background image
-        frame.place(x=127, y=100)
+        frame.place(x=self.MAIN_FRAME_X, y=self.MAIN_FRAME_Y)
         # Prevent the frame from resizing to fit its children
         frame.grid_propagate(False)
         # Have column 1 and row 2 expand to fill the available space (spacers)
@@ -116,7 +139,8 @@ class CockpitGUI:
         frame.rowconfigure(2, weight=10)
 
         # Label for the screen heading/title
-        label_title = ttk.Label(frame, text="Window Controls", font=("Arial", 22, "bold"), anchor=tk.CENTER)
+        if self.SHOW_TITLE_LABEL:
+            label_title = ttk.Label(frame, text="Window Controls", font=("Arial", 22, "bold"), anchor=tk.CENTER)
 
         # Re-format the window_ids to match the desired grid layout (one pair of windows per column)
         window_ids = [self.window_ids[i:i + 2] for i in range(0, len(self.window_ids), 2)]
@@ -137,8 +161,9 @@ class CockpitGUI:
         vspacer = ttk.Frame(frame)
         vspacer.grid(row=2, column=3, padx=5, pady=5, sticky=tk.N+tk.S)
 
-        # Place the title label in the top row, spanning all columns
-        label_title.grid(row=0, column=0, columnspan=4, sticky=tk.EW)
+        if self.SHOW_TITLE_LABEL:
+            # Place the title label in the top row, spanning all columns
+            label_title.grid(row=0, column=0, columnspan=4, sticky=tk.EW)
 
         # Lower the background picture to the bottom layer in the GUI
         self.background_label.lower()
@@ -153,7 +178,7 @@ class CockpitGUI:
         # Frame to hold the window ID label, the window position bar and the open/close buttons 
         frame = ttk.Frame(parent)
         label = ttk.Label(frame, text=window_id, anchor=tk.CENTER, font=("Arial", 16, "bold"))
-        vbar = CustomVerticalBar(frame)
+        vbar = CustomVerticalBar(frame, width=self.VBAR_WIDTH, height=self.VBAR_HEIGHT)
         vbar.bind("<Button-1>", lambda event: self._vbar_on_click(event, window_id))
         btns_frame = ttk.Frame(frame)
         btn_up = ttk.Button(btns_frame, text="^", command=lambda: self.window_close(window_id), width=2)
@@ -179,3 +204,33 @@ class CockpitGUI:
         click_position = event.y
         new_value = 100 - int((click_position / vbar.height) * 100)
         self.window_set(window_id, new_value)
+
+
+
+class CockpitGUI(BaseGUI):
+    """Simple GUI for the Cockpit application, part of the window control example system."""
+
+    WINDOW_TITLE = "Cockpit"
+    BACKGROUND_IMAGE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "infotainment.png"))
+    MAIN_FRAME_WIDTH = 532
+    MAIN_FRAME_HEIGHT = 351
+    MAIN_FRAME_X = 89
+    MAIN_FRAME_Y = 70
+    VBAR_WIDTH = 210
+    VBAR_HEIGHT = 100
+    SHOW_TITLE_LABEL = True
+
+
+
+class MobileAppGUI(BaseGUI):
+    """Simple GUI for the Mobile App simulated application, part of the window control example system."""
+
+    WINDOW_TITLE = "Mobile App"
+    BACKGROUND_IMAGE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "mobileapp.png"))
+    MAIN_FRAME_WIDTH = 245
+    MAIN_FRAME_HEIGHT = 282
+    MAIN_FRAME_X = 25
+    MAIN_FRAME_Y = 239
+    VBAR_WIDTH = 75
+    VBAR_HEIGHT = 80
+    SHOW_TITLE_LABEL = False
