@@ -4,3 +4,9 @@
 .idea
 **/build/
 **/objs/
+Window.c
+Window.h
+WindowPlugin.c
+WindowPlugin.h
+WindowSupport.c
+WindowSupport.h
