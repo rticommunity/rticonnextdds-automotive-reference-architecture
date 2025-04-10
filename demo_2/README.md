@@ -1,4 +1,3 @@
-
 # Cloud Deployment
 
 A Routing Service is deployed on an AWS EC2 instance and run the Zonal Controller and 
@@ -37,11 +36,11 @@ If you are using another Docker registry, you need to change the terraform scrip
 
 ### Prerequisites
 
-You have to create an RSA key pair in your local machine to log in to the EC2 instance.
+You have to create an RSA key pair (without a passphrase) in your local machine to log in to the EC2 instance.
 
 You can do this by running the following command:
 ```bash
-ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ""
 ```
 This command creates a public and private key in the ~/.ssh directory. The Terraform script uses the public key to 
 create a new key pair in AWS as you can see in the terraform script:
@@ -117,8 +116,10 @@ cd scripts
 
 Log to the EC2 instance and run the following command:
 ```bash
-sudo docker run --rm -it -p 80:8080/udp -p 90:8090/udp --name rs -e eip01_eip=${public_ip_01) -d ialejot/aee 
-rtiroutingservice -cfgFile RSConfig.xml -cfgName example_WanT -verbosity 5
+sudo docker run --rm -it -p 80:8080/udp -p 90:8090/udp --name rs -e eip01_eip=$ec2_instance_external_ip
+     -v $PWD/rti_license.dat:/opt/rti.com/rti_connext_dds-7.3.0/rti_license.dat ialejot/aee 
+     -cfgFile RSConfig.xml -cfgName example_WanT -verbosity 5
+
 ```
 being *public_ip_01* the public ip of the EC2 instance that you can check as shown in the previous section.
 

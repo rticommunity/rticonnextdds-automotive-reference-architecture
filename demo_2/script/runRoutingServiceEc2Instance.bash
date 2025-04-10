@@ -3,7 +3,7 @@
 terraform_dir="../terraform-infrastructure"
 
 # Default values
-ssh_key="~/.ssh/id_rsa" #it has to match with the key used in the terraform script (ssh-key-local)
+ssh_key="~/.ssh/id_rsa_terraform" #it has to match with the key used in the terraform script (ssh-key-local)
 public_port_1="80"
 private_port_1="8080"
 public_port_2="90"

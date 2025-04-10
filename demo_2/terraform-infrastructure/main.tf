@@ -1,4 +1,5 @@
 terraform {
+  required_version = ">= 1.3.0"
   backend "s3" {
     bucket         = "applications-backend-state-rti-example-001"
     key            = "Automotive-easy-example/backend-state"
@@ -18,24 +19,41 @@ provider "aws" {
   region = "eu-west-2"
 }
 
-resource "aws_key_pair" "ssh-key-local" {
-  key_name   = "ssh-key-local"
-  public_key = file("~/.ssh/id_rsa.pub")
-  tags = {
-    Project = "wiw"
-    Owner   = "ialejo"
-  }
-}
 
 variable "dockerhub_username" {
   description = "Docker Hub Username"
   type        = string
+  default     = "ialejot"
 }
 
 variable "dockerhub_password" {
   description = "Docker Hub Password"
   type        = string
   sensitive   = true
+}
+
+variable "rti_license_path" {
+  description = "Path to the license file"
+  type        = string
+  sensitive   = true
+  default     = "~/rti_connext_dds-7.3.0"
+}
+
+variable "ssh_key_path" {
+  description = "Path to the SSH private key"
+  type        = string
+  sensitive   = true
+  default     = "~/.ssh/id_rsa_terraform"
+}
+
+
+resource "aws_key_pair" "ssh-key-local" {
+  key_name   = "ssh-key-local"
+  public_key = file("${var.ssh_key_path}.pub")
+  tags = {
+    Project = "wiw"
+    Owner   = "ialejo"
+  }
 }
 
 resource "aws_security_group" "app_sg" {
@@ -91,17 +109,23 @@ resource "aws_instance" "app_instance1" {
   key_name             = aws_key_pair.ssh-key-local.key_name
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
-  user_data = <<-EOF
-              #!/bin/bash
-              sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
-              systemctl restart sshd
-              apt update -y
-              apt install -y docker.io
-              systemctl start docker
-              systemctl enable docker
+  user_data = base64encode(templatefile("${path.module}/user_data.sh.tpl", {
+    dockerhub_username = var.dockerhub_username
+    dockerhub_password = var.dockerhub_password
+  }))
 
-              echo ${var.dockerhub_password} | docker login -u ${var.dockerhub_username} --password-stdin
-              EOF
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = file(var.ssh_key_path)
+    host        = self.public_ip
+    port        = 2222
+  }
+
+  provisioner "file" {
+    source      = "${var.rti_license_path}/rti_license.dat"
+    destination = "/home/ubuntu/rti_license.dat"
+  }
 
   tags = {
     Name    = "AppInstance1"
@@ -109,5 +133,7 @@ resource "aws_instance" "app_instance1" {
     Owner   = "ialejo"
   }
 }
+
+
 
 
