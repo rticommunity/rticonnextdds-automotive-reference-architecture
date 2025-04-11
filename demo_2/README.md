@@ -6,13 +6,14 @@ the Cockpit on your local machine, but the Zonal Controller and the cockpit can 
 The Routing Service is configured to use the Real Time Wan Transport to make communication between the 
 Zonal Controllers and the Cockpit possible.
 
+![System architecture](resources/system.png)
+
 ## Creating the Docker image
 
 To create the Docker image, you need to have Docker installed on your machine.
 
-You can use the dockerfile provided as an example for creating your own, having in mind that you need to install:
-- RTI Connext 7.3.0 (or just the libraries and executables for running Routing Service)
-- Real Time Wan Transport
+You can use the dockerfile provided as an example. It uses the rticom/routing_service:7.3.0 image as a base image located
+on Docker Hub.
 
 To create the Docker image and push it to your Docker Registry, you need to run the following commands:
 ```bash
@@ -23,7 +24,7 @@ docker push {yourDockerRegistry}/aee
 where *yourDockerRegistry* is the Docker Hub username (or the path to your Docker Registry and Repo) and *aee* 
 is the name of the image, so you may need to change it to your own Docker Registry username.
 
-Remember to make the image private if you pull it from Docker Hub or other Docker registry that is on the internet.
+REMEMBER: not copy the RTI license file to the Docker image for security reasons.
 
 ## AWS setup
 
@@ -40,7 +41,7 @@ You have to create an RSA key pair (without a passphrase) in your local machine 
 
 You can do this by running the following command:
 ```bash
-ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ""
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa_terraform -N ""
 ```
 This command creates a public and private key in the ~/.ssh directory. The Terraform script uses the public key to 
 create a new key pair in AWS as you can see in the terraform script:
@@ -48,7 +49,7 @@ create a new key pair in AWS as you can see in the terraform script:
 ``` Terraform
 resource "aws_key_pair" "ssh-key-local" {
   key_name   = "ssh-key-local"
-  public_key = file("~/.ssh/id_rsa.pub")
+  public_key = file("~/.ssh/id_rsa_terraform.pub")
   tags = {
     Project = "wiw"
     Owner   = "ialejo"
@@ -58,7 +59,7 @@ resource "aws_key_pair" "ssh-key-local" {
 
 after deploying the infrastructure, you can log in to the EC2 instance using the following command:
 ```bash
-ssh -i "~/.ssh/id_rsa" -p 2222 ubuntu@<public_ip>
+ssh -i "~/.ssh/id_rsa_terraform" -p 2222 ubuntu@<public_ip>
 ```
 Where *public_ip* is the public ip of the EC2 instance. You can check it by running the following command:
 ```bash 
@@ -82,12 +83,16 @@ After logging in to your AWS account on a console, you can deploy the infrastruc
 ```bash
 cd terraform-infrastructure
 terraform init
-terraform apply -var="dockerhub_username=your_dockerhub_username" -var="dockerhub_password=your_dockerhub_password"
+terraform apply -var="dockerhub_username=your_dockerhub_username" -var="dockerhub_password=your_dockerhub_password" \
+                -var="rti_license_path=your_rti_license_path"
 ```
 
-This creates a single EC2 Instance.
+Terraform creates a single EC2 Instance. 
+It also installs Docker on the EC2 instance and logs in to your Docker Hub account.
+Then, it pulls the Docker image from your Docker Hub account. 
+Finally, it copies the RTI license file to the EC2 instance.
 
-You can check the ip of the EC2 instance by running the following command:
+You can check the EC2 instance ip by running the following command:
 ```bash
 terraform output
 ```
@@ -165,7 +170,7 @@ export eip01_eip=13.40.87.33
 
 For running Routing Service, we use the following command:
 ```bash
-$NDDSHOME/bin/rtiroutingservice -cfgFile RSConfig.xml -cfgName example_WanCockpitInternal
+$NDDSHOME/bin/rtiroutingservice -cfgFile RSConfig.xml -cfgName example_WanUiInternal
 ```
 
 To run the Cockpit, you just have to run the following command:

@@ -358,7 +358,7 @@
 			</session>
 		</domain_route>
 	</routing_service>
-	<routing_service name="example_WanCockpitInternal">
+	<routing_service name="example_WanUiInternal">
 
 		<annotation>
 			<documentation>

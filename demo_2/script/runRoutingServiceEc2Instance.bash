@@ -30,10 +30,10 @@ fi
 
 public_ip_01=`terraform -chdir=${terraform_dir} output -raw public_ip_01`
 echo "Running RS on ${public_ip_01}:${public_port_1}:${private_port_1} and ${public_ip_01}:${public_port_2}:${private_port_2}"
-run_rs="sudo docker pull ${docker_image}  && sudo docker run  --name rs --rm -it -d -p ${public_port_1}:${private_port_1}/udp \
+run_rs="sudo docker pull ${docker_image}  && sudo docker run  --name rs --rm -it -p ${public_port_1}:${private_port_1}/udp \
                       -p ${public_port_2}:${private_port_2}/udp -e eip01_eip=${public_ip_01} \
-                      ${docker_image} rtiroutingservice \
-                      -cfgFile RSConfig.xml -cfgName example_WanT -verbosity ALL"
+                      -v /home/ubuntu/rti_license.dat:/opt/rti.com/rti_connext_dds-7.3.0/rti_license.dat -d \
+                      ${docker_image}  -cfgFile RSConfig.xml -cfgName example_WanT "
 # runing routing service container on the remote machine
 ssh -i "${ssh_key}" -p 2222 -o StrictHostKeyChecking=no ubuntu@${public_ip_01} "${run_rs}"
 result=$?
