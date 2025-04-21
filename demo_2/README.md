@@ -1,5 +1,11 @@
 # Cloud Deployment
 
+This example demonstrates how to connect a mobile application to the Zonal Controller through the cloud.
+
+This example assumes that you already have Demo 1 configured and running. So we follow an incremental approach in this
+example by adding the cloud deployment to the previous example and configuring the applications to talk to the cloud
+infrastructure.
+
 A Routing Service is deployed on an AWS EC2 instance and run the Zonal Controller and 
 the Cockpit on your local machine, but the Zonal Controller and the cockpit can be deployed anywhere.
 
@@ -24,7 +30,7 @@ docker push {yourDockerRegistry}/aee
 where *yourDockerRegistry* is the Docker Hub username (or the path to your Docker Registry and Repo) and *aee* 
 is the name of the image, so you may need to change it to your own Docker Registry username.
 
-REMEMBER: not copy the RTI license file to the Docker image for security reasons.
+REMEMBER: do not copy the RTI license file to the Docker image for security reasons.
 
 ## AWS setup
 
@@ -76,7 +82,7 @@ export AWS_SECRET_ACCESS_KEY="XXXXX"
 export AWS_SESSION_TOKEN="XXXXXXXXXXXXXXXXXXXXXXXXX"
 ```
 
-You can check those AWS environment variables by logging into AWS and comping them by clicking on the "Accounts" tab, "Access keys" link.
+You can check those AWS environment variables by logging into AWS and copying them by clicking on the "Accounts" tab, "Access keys" link.
 
 After logging in to your AWS account on a console, you can deploy the infrastructure by running the following commands:
 
@@ -139,7 +145,7 @@ Routing Service uses Real Time Wan Transport to communicate with the Zonal Contr
 
 Zonal Controller communicates with the Cockpit thanks to the External Routing Service configured on the EC2 Instance.
 
-So, to make this possible, we use a local routing service configured to map Domain 0 and 1, taking into 
+So, to make this possible, we use a local Routing Service configured to map Domain 0 and 1, taking into 
 account that the Transport used for Domain 1 is the RT Wan Transport.
 
 Attention! Be sure you export the eip01_eip variable with the public ip of the EC2 instance.
