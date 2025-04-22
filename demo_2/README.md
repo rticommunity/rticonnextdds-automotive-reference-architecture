@@ -44,15 +44,15 @@ If you are using another Docker registry, you need to change the terraform scrip
 ### Prerequisites
 
 If you are not part of the RTI AWS Services account, 
-you will have to modify the Terraform backend to use your own S3 bucket.
+you will have to modify the Terraform backend to use/create your own S3 bucket.
 
 ``` terraform
 terraform {
   required_version = ">= 1.3.0"
   backend "s3" {
-    bucket         = "your-own-bucket"
+    bucket         = "your-own-terraform-backend-bucket"
     key            = "Automotive-easy-example/backend-state"
-    region         = "us-east-1" // or the region you want to use
+    region         = "us-east-1" # or the region you want to use
     dynamodb_table = "terraform-locks"
     encrypt        = true
   }
