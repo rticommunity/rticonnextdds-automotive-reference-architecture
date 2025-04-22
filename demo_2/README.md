@@ -43,6 +43,21 @@ If you are using another Docker registry, you need to change the terraform scrip
 
 ### Prerequisites
 
+If you are not part of the RTI AWS Services account, 
+you will have to modify the Terraform backend to use your own S3 bucket.
+
+``` terraform
+terraform {
+  required_version = ">= 1.3.0"
+  backend "s3" {
+    bucket         = "your-own-bucket"
+    key            = "Automotive-easy-example/backend-state"
+    region         = "us-east-1" // or the region you want to use
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+```
+
 You have to create an RSA key pair (without a passphrase) in your local machine to log in to the EC2 instance.
 
 You can do this by running the following command:
