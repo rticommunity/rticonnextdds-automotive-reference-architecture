@@ -176,7 +176,7 @@ $NDDSHOME/bin/rtiroutingservice -cfgFile RSConfig.xml -cfgName example_WanZonalI
 
 Then you just have to run the Zonal Controller as is shown in the main Readme file.
 
-## Cockpit Set up
+## Mobile Application Set up
 
 Cockpit communicates with the Zonal Controllers thanks to the External Routing Service configured on the EC2 Instance.
 
@@ -194,8 +194,7 @@ For running Routing Service, we use the following command:
 $NDDSHOME/bin/rtiroutingservice -cfgFile RSConfig.xml -cfgName example_WanUiInternal
 ```
 
-To run the Cockpit, you just have to run the following command:
+To run the Mobile Application, you just have to run the following command:
 ```bash
-cd cockpit
-python3 application.py --domain_id=1
+python user_interface/application.py --mode mobileapp --domain_id=1
 ```
