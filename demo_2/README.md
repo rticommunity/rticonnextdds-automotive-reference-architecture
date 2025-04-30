@@ -43,8 +43,7 @@ If you are using another Docker registry, you need to change the terraform scrip
 
 ### Prerequisites
 
-If you are not part of the RTI AWS Services account, 
-you will have to modify the Terraform backend to use/create your own S3 bucket.
+You will have to modify the Terraform backend to use/create your own S3 bucket using your AWS account.
 
 ``` terraform
 terraform {
