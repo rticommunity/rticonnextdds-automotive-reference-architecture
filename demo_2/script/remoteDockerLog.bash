@@ -1,7 +1,7 @@
 #!/bin/bash
 
 terraform_dir="../terraform-infrastructure"
-ssh_key="~/.ssh/id_rsa"
+ssh_key="~/.ssh/id_rsa_terraform" #it has to match with the key used in the terraform script (ssh-key-local)
 container_name="pub"
 public_ip_name="public_ip_01"
 if [ $# -eq 0 ]
