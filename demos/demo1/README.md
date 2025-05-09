@@ -6,7 +6,7 @@ The use-case implements the control of the vehicle windows, such as opening and 
 
 In this specific example, you will find front and rear zonal controllers, for window management, and a cockpit and a mobile apps, as Graphical User Interfaces (GUIs).
 
-![System diagram](../resource/demo1_diagram.svg)
+![System diagram](../../resource/demo1_diagram.svg)
 
 
 
@@ -68,7 +68,7 @@ There is no output expected; the terminals should just display a cursor.
    `python user_interface/application.py --mode mobileapp`  
    This command should display a compact GUI with four vertical bars representing the windows.
 
-![Cockpit application screenshot](../resource/cockpit.png)
+![Cockpit application screenshot](../../resource/cockpit.png)
 
 #### Exercising the system
 
