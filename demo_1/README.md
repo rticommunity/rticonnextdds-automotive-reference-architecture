@@ -6,7 +6,7 @@ The use-case implements the control of the vehicle windows, such as opening and 
 
 In this specific example, you will find front and rear zonal controllers, for window management, and a cockpit and a mobile apps, as Graphical User Interfaces (GUIs).
 
-![System diagram](../resource/demo_1_system.png)
+![System diagram](../resource/demo1_diagram.svg)
 
 
 

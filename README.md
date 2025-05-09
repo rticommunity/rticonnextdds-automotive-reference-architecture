@@ -50,7 +50,7 @@ The RTI Automotive Reference Architecture consists of the following key componen
 - Mobile applications for Window Control (external device)
 
 Please find a diagram of the Window Zonal Controller demo below:
-![System diagram](./resources/system_diagram.svg)
+![System diagram](./resource/system_diagram.svg)
 
 ## DDS Topics and QoS
 
