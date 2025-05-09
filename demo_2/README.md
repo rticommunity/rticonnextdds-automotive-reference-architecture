@@ -12,7 +12,7 @@ the Cockpit on your local machine, but the Zonal Controller and the cockpit can 
 The Routing Service is configured to use the Real Time Wan Transport to make communication between the 
 Zonal Controllers and the Cockpit possible.
 
-![System architecture](resources/system.png)
+![System architecture](../resource/demo_2_system.png.png)
 
 ## Creating the Docker image
 

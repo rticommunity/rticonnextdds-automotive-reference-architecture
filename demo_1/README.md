@@ -2,29 +2,28 @@
 
 This example demonstrates how to build a simple automotive use-case using a combination of RTI Connext products.
 
-The use-case implements the control of the windows, such as opening and closing them, in a configuration with zonal controllers and higher-level interfaces such as cockpit/dashboard, mobile app, etc.
+The use-case implements the control of the vehicle windows, such as opening and closing them. It includes several zonal controllers and higher-level interfaces such as cockpit/dashboard, mobile app, etc.
 
-In this specific example, two zonal controllers, one cockpit application, and one mobile app are used.
+In this specific example, you will find front and rear zonal controllers, for window management, and a cockpit and a mobile apps, as Graphical User Interfaces (GUIs).
 
-![System diagram](resources/system.png)
+![System diagram](../resource/demo_1_system.png)
 
-The cockpit and mobile applications implement Graphical User Interfaces (GUIs).
+
 
 ## Getting Started
 
-This section covers the steps required to compile and execute the example in a Linux-based system. (tested on Ubuntu WLS)
+This section covers the steps required to compile and execute the example in a Linux-based system. 
 
 ### Pre-requirements
 
-- Connext Micro 2.4.14.2 with target x64Linux4gcc7.3.0
-  - Connext Micro already compiled/set up
-- Connext Pro 7.3 with target x64Linux4gcc7.3.0
-  - Python 3.12 or similar
-  - Python tkinter module
-    - On Linux, you may need to install this module, e.g., using the command  
-    `sudo apt install python3-tk python3-ttkthemes`
-  - Connext Pro Python environment already set up
-
+- Connext Micro 2.4.14.2 or later, including compiled target libraries
+- Connext Pro 7.3 or later, including shipped target libraries
+   - Connext Pro Python environment already set up
+- Python 3.12 or similar
+- Python tkinter module
+   - On Linux, you may need to install this module, e.g., using the command  
+     `sudo apt install python3-tk python3-ttkthemes`
+  
 ### Building the example
 
 #### Zonal controller
@@ -69,7 +68,7 @@ There is no output expected; the terminals should just display a cursor.
    `python user_interface/application.py --mode mobileapp`  
    This command should display a compact GUI with four vertical bars representing the windows.
 
-![Cockpit application screenshot](resources/screenshot.png)
+![Cockpit application screenshot](../resource/cockpit.png)
 
 #### Exercising the system
 
