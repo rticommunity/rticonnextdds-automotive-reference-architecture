@@ -1,6 +1,6 @@
 # RTI Automotive Reference Architecture: Zonal Controller Use Case
 
-The Automotive Reference Architecture demonstrates RTI's best practices for building automotive systems using RTI Connext Drive. This repository contains documentation and demo applications showcasing different capabilities of Connext in an automotive context. The goal is to provide a comprehensive guide to help developers leverage Connext for building robust, scalable, and interoperable automotive systems.
+The Automotive Reference Architecture demonstrates RTI's best practices and quick-starter projects for building automotive systems using RTI Connext Drive. This repository contains documentation and demo applications showcasing different capabilities and benefits of Connext in an automotive context. The goal is to provide a comprehensive guide to help developers leverage Connext for building robust, scalable, and interoperable automotive systems.
 
 ## Contents
 
@@ -71,7 +71,7 @@ Please find a diagram of the Window Zonal Controller demo below:
 
 ### Demo 1: In-Vehicle Window Controller
 
-This example demonstrates a local deployment of the automotive window control system. It includes two zonal controllers, one cockpit application, and one mobile app.
+This example demonstrates a local deployment of the automotive window control system. It includes two zonal controllers, one cockpit application, and one mobile app. It highlights the easy deployment and easy integration with multiple OS and subsystems.
 
 #### System Architecture
 
@@ -86,7 +86,7 @@ For more details, see the [Demo 1 README](demo_1/README.md).
 
 ### Demo 2: Cloud Monitoring and V2X Window Controller
 
-This example extends Demo 1 by introducing cloud-based communication to emulate a V2X scenario. A Routing Service is deployed on an AWS EC2 instance to enable communication between the zonal controllers and the cockpit through the cloud.
+This example focuses on the V2X use case, highlighting the use of a single technology to communicate from the leave to the cloud. For that, it extends Demo 1 by introducing cloud-based communication that relies the information to a remote component over WAN, which acts as an additional mobile app. 
 
 #### System Architecture
 
