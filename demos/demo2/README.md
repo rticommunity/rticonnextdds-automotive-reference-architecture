@@ -1,11 +1,14 @@
-  
-This guide demonstrates a leaf-to-cloud deployment of the Window example introduced in demo1. It walks you through deploying the Window example from demo1 to the cloud using AWS EC2 and Docker. You’ll set up the required infrastructure, build and deploy Docker images, and connect your Zonal Controller and Cockpit to the cloud Routing Service.
+# Demo 2: Leaf-to-Cloud and V2X Window Controller 
+This guide demonstrates a leaf-to-cloud deployment of the Window example introduced in demo1.
+It walks you through deploying the Window example from demo1 to the cloud using AWS EC2 and Docker.
+You’ll set up the required infrastructure, build and deploy Docker images,
+and connect your Zonal Controller and Mobile Application to the cloud Routing Service.
 
 ---
 
 ## Overview
 
-- **Goal:** Run the Routing Service in the cloud (AWS EC2) to relay data between Zonal Controller and Cockpit.
+- **Goal:** Run the Routing Service in the cloud (AWS EC2) to relay data between Zonal Controller and Mobile Application.
 - **New Components:**  
   - **Routing Service** (in the cloud)  
   - **Real-Time WAN (RTWAN) Transport** for WAN communication
@@ -132,7 +135,7 @@ Replace `<public_ip>` and `{yourDockerRegistry}` as needed.
 
 ---
 
-### Cockpit (Mobile Application)
+### Mobile Application
 
 1. Export the EC2 public IP:
 
@@ -146,7 +149,7 @@ Replace `<public_ip>` and `{yourDockerRegistry}` as needed.
   $NDDSHOME/bin/rtiroutingservice -cfgFile RSConfig.xml -cfgName example_WanUiInternal
   ```
 
-3. Run the Cockpit:
+3. Run the Mobile Application:
 
   ```bash
   python user_interface/application.py --mode mobileapp --domain_id=1
@@ -159,4 +162,4 @@ Replace `<public_ip>` and `{yourDockerRegistry}` as needed.
 - Build and push Docker image.
 - Deploy AWS infrastructure with Terraform.
 - Run Routing Service in the cloud.
-- Connect Zonal Controller and Cockpit via the cloud Routing Service.
+- Connect Zonal Controller and Mobile Application via the cloud Routing Service.

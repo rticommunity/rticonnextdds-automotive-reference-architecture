@@ -1,4 +1,4 @@
-# Automotive Window Control Example
+# Demo 1: In-Vehicle Window Controller
 
 This example implements a common automotive use case: controlling vehicle windows (opening and closing). It includes zonal controllers and several higher-level interfaces such as cockpit/dashboard and mobile apps.
 
@@ -44,7 +44,7 @@ This section covers the steps required to compile and execute the example. It ha
    `~/rti_connext_dds-7.3.0/bin/rtiddsgen -create typefiles -language python -d ./user_interface Window.idl`  
    *Note: On Windows, include the `-ppDisable` option if needed.*
 
-## 3Running the Example
+## 3. Running the Example
 
 ### 3.1. Zonal Controllers
 

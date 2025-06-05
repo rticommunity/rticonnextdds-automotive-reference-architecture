@@ -78,15 +78,17 @@ This example demonstrates a local deployment of the automotive window control sy
 The system consists of:
 - **Zonal Controllers**: Directly control the position of two windows each.
 - **Cockpit/Dashboard**: Provides a GUI for controlling and monitoring window positions.
-- **Mobile App**: Offers remote control of the windows.
+- **Mobile Application**: Offers remote control of windows.
 
 The communication is designed around RTI Connext, focusing on interfacing with the data in the system rather than the devices or applications.
 
 For more details, see the [Demo 1 README](demo_1/README.md).
 
-### Demo 2: Cloud Monitoring and V2X Window Controller
+### Demo 2: Leaf-to-Cloud and V2X Window Controller
 
-This example focuses on the V2X use case, highlighting the use of a single technology to communicate from the leave to the cloud. For that, it extends Demo 1 by introducing cloud-based communication that relies the information to a remote component over WAN, which acts as an additional mobile app. 
+This example focuses on the V2X use case, highlighting the use of a single technology to communicate from the leave to the cloud. 
+For that, it extends Demo 1 by introducing cloud-based communication that relies on the information to a remote component over WAN,
+which acts as an additional mobile app. 
 
 #### System Architecture
 
