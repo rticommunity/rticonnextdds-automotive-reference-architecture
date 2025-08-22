@@ -1,3 +1,9 @@
+<!-- (c) 2025 Copyright, Real-Time Innovations, Inc. All rights reserved.
+     No duplications, whole or partial, manual or electronic, may be made
+     without express written permission.  Any such copies, or revisions thereof,
+     must display this notice unaltered.
+     This code contains trade secrets of Real-Time Innovations, Inc. -->
+
 <?xml version="1.0"?>
 <dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="http://community.rti.com/schema/7.3.0/rti_routing_service.xsd">

@@ -1,4 +1,9 @@
 #!/bin/bash
+# (c) 2025 Copyright, Real-Time Innovations, Inc. All rights reserved.
+# No duplications, whole or partial, manual or electronic, may be made
+# without express written permission.  Any such copies, or revisions thereof,
+# must display this notice unaltered.
+# This code contains trade secrets of Real-Time Innovations, Inc.
 
 terraform_dir="../terraform-infrastructure"
 ssh_key="~/.ssh/id_rsa_terraform" #it has to match with the key used in the terraform script (ssh-key-local)
