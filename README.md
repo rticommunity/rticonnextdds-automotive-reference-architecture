@@ -65,9 +65,9 @@ Please find a diagram of the Window Zonal Controller demo below:
 ## Hands-On: Demos
 *RTI recommends following along the demo-specific READMEs before returning here and learning more about the designed system architecture.*
 
-- ### [Demo 1](./demo_1/) : In-Vehicle Window Controller
+- ### [Demo 1](./demos/demo1/) : In-Vehicle Window Controller
 
-- ### [Demo 2](./demo_2/) : Cloud Monitoring and V2X Window Controller
+- ### [Demo 2](./demos/demo2/) : Cloud Monitoring and V2X Window Controller
 
 ### Demo 1: In-Vehicle Window Controller
 
@@ -82,7 +82,7 @@ The system consists of:
 
 The communication is designed around RTI Connext, focusing on interfacing with the data in the system rather than the devices or applications.
 
-For more details, see the [Demo 1 README](demo_1/README.md).
+For more details, see the [Demo 1 README](./demos/demo1/README.md).
 
 ### Demo 2: Leaf-to-Cloud and V2X Window Controller
 
@@ -99,5 +99,5 @@ The system architecture remains similar to Demo 1 but includes:
 - **Dockerized Routing Service**: The Routing Service is packaged as a Docker image for easy deployment.
 - **AWS Integration**: Terraform scripts are provided to set up the necessary AWS infrastructure.
 
-For more details, see the [Demo 2 README](demo_2/README.md).
+For more details, see the [Demo 2 README](./demos/demo2/README.md).
 ````
